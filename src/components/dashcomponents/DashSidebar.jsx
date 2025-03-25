@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { Link } from "react-router-dom";
-import brand from "../../assets/images/1.png";
+import brand from "../../assets/images/2.png";
 
 function DashSidebar() {
   const { logout } = useUser();
@@ -69,7 +69,7 @@ function DashSidebar() {
           <img
             src={brand}
             alt="logo"
-            className="w-full max-w-[150px] h-auto object-contain"
+            className="w-full max-w-[50px] h-auto object-contain"
           />
         </Link>
 

@@ -40,8 +40,9 @@ const App = () => {
 
               <Route element={<ProtectedRoute />}>
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route path="bookings" element={<div>Bookings Page</div>} />
+                <Route path="trips" element={<div>Bookings Page</div>} />
                 <Route path="profile" element={<div>Profile Page</div>} />
+                <Route path="settings" element={<div>Settings Page</div>} />
               </Route>
             </Routes>
           </ReactLenis>
