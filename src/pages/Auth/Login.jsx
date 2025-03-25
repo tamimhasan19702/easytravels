@@ -4,15 +4,20 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
+import { auth, db } from "../../../firebase.config"; // Import auth and db from firebase.config
+import { signInWithEmailAndPassword } from "firebase/auth"; // For signing in user
+import { doc, getDoc } from "firebase/firestore"; // For Firestore operations
 
 function Login() {
   const [activeTab, setActiveTab] = useState("Traveler"); // State for tab switching (role selection)
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [firebaseError, setFirebaseError] = useState(null); // State for Firebase errors
+  const [isLoading, setIsLoading] = useState(false); // State for loading animation
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue, // Added to dynamically set the role value
+    setValue,
   } = useForm({
     defaultValues: {
       role: "Traveler", // Default role
@@ -26,10 +31,57 @@ function Login() {
     setValue("role", tab); // Update the role field in the form
   };
 
-  const onSubmit = (data) => {
-    console.log(data); // Will include { email, password, remember, role }
-    // Add your sign-in logic here (e.g., API call with data.role)
-    navigate("/"); // Redirect to home after successful sign-in
+  const onSubmit = async (data) => {
+    try {
+      // Set loading state to true
+      setIsLoading(true);
+      // Clear any previous Firebase errors
+      setFirebaseError(null);
+
+      // Step 1: Sign in user with email and password using Firebase Authentication
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      const user = userCredential.user;
+
+      // Step 2: Fetch user data from Firestore to verify the role
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        throw new Error("User data not found in Firestore.");
+      }
+
+      const userData = userDoc.data();
+      const storedRole = userData.role;
+
+      // Step 3: Verify the selected role matches the stored role
+      if (storedRole !== data.role) {
+        throw new Error(
+          `Role mismatch: You are registered as a ${storedRole}, but you selected ${data.role}.`
+        );
+      }
+
+      console.log("User signed in successfully:", user.uid);
+      navigate("/"); // Redirect to home after successful sign-in
+    } catch (error) {
+      // Handle Firebase-specific errors
+      if (error.code === "auth/user-not-found") {
+        setFirebaseError("No user found with this email.");
+      } else if (error.code === "auth/wrong-password") {
+        setFirebaseError("Incorrect password. Please try again.");
+      } else if (error.code === "auth/invalid-email") {
+        setFirebaseError("Please enter a valid email address.");
+      } else {
+        setFirebaseError(
+          error.message || "An error occurred. Please try again."
+        );
+      }
+      console.error("Login error:", error);
+    } finally {
+      // Set loading state to false after the request completes (success or failure)
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,7 +103,7 @@ function Login() {
                 className={`flex-1 py-3 text-center rounded-l-lg font-medium ${
                   activeTab === "Traveler"
                     ? "bg-[#9DAE11] text-white"
-                    : "bg-light_gray_2 text-light_gray"
+                    : "bg-white text-light_gray"
                 }`}>
                 Traveler
               </button>
@@ -60,7 +112,7 @@ function Login() {
                 className={`flex-1 py-3 text-center rounded-r-lg font-medium ${
                   activeTab === "Agency"
                     ? "bg-[#9DAE11] text-white"
-                    : "bg-light_gray_2 text-light_gray"
+                    : "bg-white text-light_gray"
                 }`}>
                 Agency
               </button>
@@ -70,6 +122,13 @@ function Login() {
             <h2 className="text-2xl font-bold text-center mb-6 dark_gray">
               Sign in Form
             </h2>
+
+            {/* Display Firebase Error */}
+            {firebaseError && (
+              <p className="text-red-500 text-sm text-center mb-4">
+                {firebaseError}
+              </p>
+            )}
 
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -129,11 +188,20 @@ function Login() {
                 </label>
               </div>
 
-              {/* Sign In Button */}
+              {/* Sign In Button with Loader */}
               <button
                 type="submit"
-                className="w-full primary_btn !py-3 rounded-md">
-                Sign in
+                className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
+                disabled={isLoading} // Disable button while loading
+              >
+                {isLoading ? (
+                  <>
+                    <span className="loader mr-2"></span>
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </button>
 
               {/* Create New Account Link */}

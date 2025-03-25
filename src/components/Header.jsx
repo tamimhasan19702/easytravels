@@ -7,8 +7,6 @@ import { IoClose } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { mainNavigation } from "../constant";
 import brand from "../assets/images/1.png";
-import Login from "../pages/Auth/Login";
-import Signup from "../pages/Auth/Signup";
 
 const Header = () => {
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
@@ -92,7 +90,11 @@ const Header = () => {
                           e.preventDefault();
                           handleMenuClick(index);
                         }}>
-                        <Link to={menuItem?.link} onClick={(e) => {}}>
+                        <Link
+                          to={menuItem?.link}
+                          onClick={(e) => {
+                            e.preventDefault();
+                          }}>
                           {menuItem?.name}
                         </Link>
                         <button className="p-[6px] cursor-pointer border border-gray-300 rounded-sm">

@@ -13,6 +13,7 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
   const [firebaseError, setFirebaseError] = useState(null); // State for Firebase errors
+  const [isLoading, setIsLoading] = useState(false); // State for loading animation
   const {
     register,
     handleSubmit,
@@ -37,6 +38,8 @@ function Signup() {
 
   const onSubmit = async (data) => {
     try {
+      // Set loading state to true
+      setIsLoading(true);
       // Clear any previous Firebase errors
       setFirebaseError(null);
 
@@ -72,6 +75,9 @@ function Signup() {
         setFirebaseError("An error occurred. Please try again.");
       }
       console.error("Signup error:", error);
+    } finally {
+      // Set loading state to false after the request completes (success or failure)
+      setIsLoading(false);
     }
   };
 
@@ -203,8 +209,7 @@ function Signup() {
                   {...register("phoneNumber", {
                     required: "Phone number is required",
                     pattern: {
-                      value:
-                        /^(\+\d{1,3}[- ]?)?\(?\d{3}\)?[- ]?\d{3}[- ]?\d{4}$/,
+                      value: /^\+?[\d\s-]{7,15}$/,
                       message: "Please enter a valid phone number",
                     },
                   })}
@@ -236,11 +241,20 @@ function Signup() {
                 </p>
               )}
 
-              {/* Sign Up Button */}
+              {/* Sign Up Button with Loader */}
               <button
                 type="submit"
-                className="w-full primary_btn !py-3 rounded-md">
-                Sign up
+                className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
+                disabled={isLoading} // Disable button while loading
+              >
+                {isLoading ? (
+                  <>
+                    <span className="loader mr-2"></span>
+                    Signing up...
+                  </>
+                ) : (
+                  "Sign up"
+                )}
               </button>
 
               {/* Log In Link */}
