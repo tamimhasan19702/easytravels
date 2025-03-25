@@ -23,8 +23,10 @@ const DashHeader = () => {
     <>
       {/* Fixed Top Bar */}
       <header className="fixed top-0 left-0 md:left-64 w-full md:w-[calc(100%-16rem)] h-16 bg-[#e2e6bd] flex items-center justify-between px-6 border-b border-gray-200 z-30">
-        {/* Placeholder for Top Bar Content (e.g., Title or Breadcrumbs) */}
-        <div className="text-[#2E4A47] text-lg font-semibold">Dashboard</div>
+        {/* Center the text on mobile, align left on larger screens */}
+        <div className="text-[#2E4A47] text-lg font-semibold text-center md:text-left flex-1">
+          Dashboard
+        </div>
 
         {/* User Icon with Dropdown */}
         <div className="relative">

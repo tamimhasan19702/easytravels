@@ -19,9 +19,7 @@ function Dashboard() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold text-[#2E4A47] mb-4">
-        Welcome to the Dashboard
-      </h1>
+      <h1 className=" mb-10 ">Welcome to the Dashboard</h1>
       <p className="text-[#2E4A47] mb-2">Email: {user.email}</p>
       <p className="text-[#2E4A47] mb-4">Role: {user.role}</p>
 
