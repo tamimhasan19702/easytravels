@@ -5,8 +5,12 @@ import { useEffect, useState } from "react";
 import Preloader from "./components/Preloader";
 import Home from "./pages/home/Home";
 import { Routes, Route } from "react-router-dom";
-import Login from "./pages/Auth/Login";
+import PublicRoute from "./components/PublicRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { UserProvider } from "./context/UserContext";
 import Signup from "./pages/Auth/Signup";
+import Login from "./pages/Auth/Login";
+import Dashboard from "./pages/Dashboard/dashboard";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -20,15 +24,28 @@ const App = () => {
       {loading ? (
         <Preloader />
       ) : (
-        <ReactLenis root>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+        <UserProvider>
+          <ReactLenis root>
+            <Routes>
+              <Route path="/" element={<Home />} />
 
-            {/* protectedroute */}
-          </Routes>
-        </ReactLenis>
+              {/* publicroute */}
+
+              <Route element={<PublicRoute />}>
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login" element={<Login />} />
+              </Route>
+
+              {/* protectedroute */}
+
+              <Route element={<ProtectedRoute />}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="bookings" element={<div>Bookings Page</div>} />
+                <Route path="profile" element={<div>Profile Page</div>} />
+              </Route>
+            </Routes>
+          </ReactLenis>
+        </UserProvider>
       )}
     </>
   );

@@ -7,13 +7,16 @@ import Header from "../../components/Header";
 import { auth, db } from "../../../firebase.config"; // Import auth and db from firebase.config
 import { createUserWithEmailAndPassword } from "firebase/auth"; // For creating user
 import { doc, setDoc } from "firebase/firestore"; // For Firestore operations
+import { useUser } from "../../context/UserContext";
 
 function Signup() {
-  const [activeTab, setActiveTab] = useState("Traveler"); // State for tab switching (role selection)
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State for confirm password visibility
-  const [firebaseError, setFirebaseError] = useState(null); // State for Firebase errors
-  const [isLoading, setIsLoading] = useState(false); // State for loading animation
+  const [activeTab, setActiveTab] = useState("Traveler");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [firebaseError, setFirebaseError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useUser(); // Get login function from context
   const {
     register,
     handleSubmit,
@@ -22,28 +25,22 @@ function Signup() {
     watch,
   } = useForm({
     defaultValues: {
-      role: "Traveler", // Default role
+      role: "Traveler",
     },
   });
   const navigate = useNavigate();
-
-  // Watch the password field to compare with confirm password
   const password = watch("password");
 
-  // Update the role value in the form whenever the activeTab changes
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setValue("role", tab); // Update the role field in the form
+    setValue("role", tab);
   };
 
   const onSubmit = async (data) => {
     try {
-      // Set loading state to true
       setIsLoading(true);
-      // Clear any previous Firebase errors
       setFirebaseError(null);
 
-      // Step 1: Create user with email and password using Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -51,7 +48,6 @@ function Signup() {
       );
       const user = userCredential.user;
 
-      // Step 2: Store additional user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         email: data.email,
         phoneNumber: data.phoneNumber,
@@ -59,10 +55,20 @@ function Signup() {
         createdAt: new Date().toISOString(),
       });
 
+      // Create user object for context
+      const userData = {
+        uid: user.uid,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        role: data.role,
+      };
+
+      // Store user in context
+      login(userData);
+
       console.log("User created successfully:", user.uid);
-      navigate("/"); // Redirect to home after successful signup
+      navigate("/dashboard");
     } catch (error) {
-      // Handle Firebase-specific errors
       if (error.code === "auth/email-already-in-use") {
         setFirebaseError(
           "This email is already in use. Please use a different email."
@@ -76,7 +82,6 @@ function Signup() {
       }
       console.error("Signup error:", error);
     } finally {
-      // Set loading state to false after the request completes (success or failure)
       setIsLoading(false);
     }
   };

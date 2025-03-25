@@ -4,15 +4,18 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
-import { auth, db } from "../../../firebase.config"; // Import auth and db from firebase.config
-import { signInWithEmailAndPassword } from "firebase/auth"; // For signing in user
-import { doc, getDoc } from "firebase/firestore"; // For Firestore operations
+import { auth, db } from "../../../firebase.config";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { useUser } from "../../context/UserContext"; // Import the custom hook
 
 function Login() {
-  const [activeTab, setActiveTab] = useState("Traveler"); // State for tab switching (role selection)
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
-  const [firebaseError, setFirebaseError] = useState(null); // State for Firebase errors
-  const [isLoading, setIsLoading] = useState(false); // State for loading animation
+  const [activeTab, setActiveTab] = useState("Traveler");
+  const [showPassword, setShowPassword] = useState(false);
+  const [firebaseError, setFirebaseError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useUser(); // Get login function from context
   const {
     register,
     handleSubmit,
@@ -20,25 +23,22 @@ function Login() {
     setValue,
   } = useForm({
     defaultValues: {
-      role: "Traveler", // Default role
+      role: "Traveler",
     },
   });
   const navigate = useNavigate();
 
-  // Update the role value in the form whenever the activeTab changes
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setValue("role", tab); // Update the role field in the form
+    setValue("role", tab);
   };
 
   const onSubmit = async (data) => {
     try {
-      // Set loading state to true
       setIsLoading(true);
-      // Clear any previous Firebase errors
       setFirebaseError(null);
 
-      // Step 1: Sign in user with email and password using Firebase Authentication
+      // Step 1: Sign in user with email and password
       const userCredential = await signInWithEmailAndPassword(
         auth,
         data.email,
@@ -46,7 +46,7 @@ function Login() {
       );
       const user = userCredential.user;
 
-      // Step 2: Fetch user data from Firestore to verify the role
+      // Step 2: Fetch user data from Firestore
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) {
         throw new Error("User data not found in Firestore.");
@@ -55,17 +55,27 @@ function Login() {
       const userData = userDoc.data();
       const storedRole = userData.role;
 
-      // Step 3: Verify the selected role matches the stored role
+      // Step 3: Verify role
       if (storedRole !== data.role) {
         throw new Error(
           `Role mismatch: You are registered as a ${storedRole}, but you selected ${data.role}.`
         );
       }
 
+      // Step 4: Create user object for context
+      const contextUserData = {
+        uid: user.uid,
+        email: data.email,
+        role: storedRole,
+        phoneNumber: userData.phoneNumber,
+      };
+
+      // Step 5: Store user in context
+      login(contextUserData);
+
       console.log("User signed in successfully:", user.uid);
-      navigate("/"); // Redirect to home after successful sign-in
+      navigate("/dashboard");
     } catch (error) {
-      // Handle Firebase-specific errors
       if (error.code === "auth/user-not-found") {
         setFirebaseError("No user found with this email.");
       } else if (error.code === "auth/wrong-password") {
@@ -79,7 +89,6 @@ function Login() {
       }
       console.error("Login error:", error);
     } finally {
-      // Set loading state to false after the request completes (success or failure)
       setIsLoading(false);
     }
   };
@@ -133,10 +142,7 @@ function Login() {
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Hidden Role Input */}
-              <input
-                type="hidden"
-                {...register("role")} // Stores "Traveler" or "Agency"
-              />
+              <input type="hidden" {...register("role")} />
 
               {/* Email Input */}
               <div className="mb-4">
@@ -192,8 +198,7 @@ function Login() {
               <button
                 type="submit"
                 className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
-                disabled={isLoading} // Disable button while loading
-              >
+                disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <span className="loader mr-2"></span>
