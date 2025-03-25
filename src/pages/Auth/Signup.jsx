@@ -41,14 +41,18 @@ function Signup() {
       setIsLoading(true);
       setFirebaseError(null);
 
+      // Fix: Pass the correct arguments to createUserWithEmailAndPassword
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        data.email,
-        data.password
+        data.email, // Correct: Use email field
+        data.password // Correct: Use password field
       );
       const user = userCredential.user;
 
+      // Store user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
         role: data.role,
@@ -58,6 +62,7 @@ function Signup() {
       // Create user object for context
       const userData = {
         uid: user.uid,
+        fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
         role: data.role,
@@ -135,10 +140,24 @@ function Signup() {
             {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Hidden Role Input */}
-              <input
-                type="hidden"
-                {...register("role")} // Stores "Traveler" or "Agency"
-              />
+              <input type="hidden" {...register("role")} />
+
+              {/* Full Name */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
+                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray"
+                  {...register("fullName", {
+                    required: "Full name is required",
+                  })}
+                />
+                {errors.fullName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.fullName.message}
+                  </p>
+                )}
+              </div>
 
               {/* Email Input */}
               <div className="mb-4">
@@ -250,8 +269,7 @@ function Signup() {
               <button
                 type="submit"
                 className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
-                disabled={isLoading} // Disable button while loading
-              >
+                disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <span className="loader mr-2"></span>
