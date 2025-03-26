@@ -211,3 +211,61 @@ export const animationVariants2 = {
     },
   }),
 };
+
+export const graphData = {
+  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+  datasets: [
+    {
+      label: "Trips Booked",
+      data: [5, 3, 7, 4, 6, 2],
+      backgroundColor: "#9DAE11",
+      borderColor: "#8C9A0F",
+      borderWidth: 1,
+    },
+  ],
+};
+
+// Demo data for recent trips
+export const recentTrips = [
+  {
+    id: 1,
+    destination: "Paris, France",
+    date: "2025-04-10",
+    status: "Completed",
+  },
+  {
+    id: 2,
+    destination: "Tokyo, Japan",
+    date: "2025-05-15",
+    status: "Upcoming",
+  },
+  {
+    id: 3,
+    destination: "New York, USA",
+    date: "2025-03-01",
+    status: "Completed",
+  },
+];
+
+// Demo data for upcoming bookings
+export const upcomingBookings = [
+  {
+    id: 1,
+    destination: "Tokyo, Japan",
+    date: "2025-05-15",
+    status: "Confirmed",
+  },
+  {
+    id: 2,
+    destination: "Sydney, Australia",
+    date: "2025-06-20",
+    status: "Pending",
+  },
+];
+
+// Demo stats
+export const stats = {
+  totalTrips: 15,
+  totalSpent: "$5,230",
+  favoriteDestination: "Paris, France",
+};
