@@ -4,7 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
-import { useTripRequest } from "../../context/TripRequestContext"; // Import the custom hook
+import { useTripRequest } from "../../context/TripRequestContext";
 import { db } from "../../../firebase.config";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import tripRequest from "../../assets/images/trip.svg";
@@ -18,34 +18,10 @@ function TripRequest() {
 
   // Use the TripRequestContext
   const {
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
-    travelType,
-    setTravelType,
-    maleCount,
-    setMaleCount,
-    femaleCount,
-    setFemaleCount,
-    kidsCount,
-    setKidsCount,
-    destination,
-    setDestination,
-    accommodation,
-    setAccommodation,
-    transportation,
-    setTransportation,
-    foodPreference,
-    setFoodPreference,
-    interests,
-    setInterests,
-    remarks,
-    setRemarks,
-    termsAgreed,
-    setTermsAgreed,
+    trip,
+    setTrip,
     locations,
-    updateLocation,
+    setLocations,
     accommodationType,
     setAccommodationType,
     transportationType,
@@ -53,6 +29,7 @@ function TripRequest() {
     foodPrefs,
     setFoodPrefs,
     handleAddLocation,
+    updateLocation,
     handleSubmit,
   } = useTripRequest();
 
@@ -97,13 +74,29 @@ function TripRequest() {
     return null;
   }
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
+
+  // Helper function to update the trip state
+  const updateTripField = (field, value) => {
+    setTrip((prevTrip) => ({
+      ...prevTrip,
+      [field]: value,
+    }));
+  };
+
   return (
     <DashboardLayout>
       <div className="bg-[#F5F6F5] min-h-screen p-6">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center md:space-x-8">
           <div className="md:w-2/3">
-            <h1 className="text-4xl font-bold text-[#2E4A47] mb-6">
+            <h1 className="text-5xl font-bold text-[#2E4A47] mb-6">
               MAKE YOUR TRAVEL PLAN WITH US
             </h1>
           </div>
@@ -116,389 +109,348 @@ function TripRequest() {
           </div>
         </div>
 
-        {/* Main Content Section */}
-        <div className="flex flex-col md:flex-row md:space-x-8 mt-6">
-          {/* Left Side: Form */}
-          <div className="md:w-2/3 bg-white p-6 rounded-lg shadow-md">
-            <form onSubmit={handleSubmit}>
-              {/* Start and End Date */}
-              <div className="flex space-x-4 mb-6">
-                <div className="w-1/2">
-                  <label className="block text-[#2E4A47] font-medium mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label className="block text-[#2E4A47] font-medium mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Travel Type */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Travel Type
+        {/* Form Section */}
+        <div className="mt-8 px-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Start and End Date */}
+            <div className="flex space-x-4">
+              <div className="w-1/2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
                 </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="Solo"
-                      checked={travelType === "Solo"}
-                      onChange={(e) => setTravelType(e.target.value)}
-                      className="mr-2"
-                    />
-                    Solo
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="Group"
-                      checked={travelType === "Group"}
-                      onChange={(e) => setTravelType(e.target.value)}
-                      className="mr-2"
-                    />
-                    Group
-                  </label>
-                </div>
-                {travelType === "Group" && (
-                  <div className="mt-4 flex space-x-4">
-                    <div>
-                      <label className="block text-[#2E4A47] font-medium">
-                        Male
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => setMaleCount(maleCount + 1)}
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          +
-                        </button>
-                        <span>{maleCount}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setMaleCount(maleCount > 0 ? maleCount - 1 : 0)
-                          }
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          -
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[#2E4A47] font-medium">
-                        Female
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => setFemaleCount(femaleCount + 1)}
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          +
-                        </button>
-                        <span>{femaleCount}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setFemaleCount(
-                              femaleCount > 0 ? femaleCount - 1 : 0
-                            )
-                          }
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          -
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[#2E4A47] font-medium">
-                        Kids
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => setKidsCount(kidsCount + 1)}
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          +
-                        </button>
-                        <span>{kidsCount}</span>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setKidsCount(kidsCount > 0 ? kidsCount - 1 : 0)
-                          }
-                          className="p-1 bg-[#9DAE11] text-white rounded">
-                          -
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Destination */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Destination
-                </label>
-                <select
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  required>
-                  <option value="">Select Country</option>
-                  <option value="Dhaka">Dhaka</option>
-                  <option value="Fandpur">Fandpur</option>
-                  <option value="Jasmin Uddin er bari">
-                    Jasmin Uddin er bari
-                  </option>
-                  <option value="Others">Others</option>
-                </select>
-              </div>
-
-              {/* Accommodation Preferences */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Want us to handle your accommodation?
-                </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="Yes"
-                      checked={accommodation === "Yes"}
-                      onChange={(e) => setAccommodation(e.target.value)}
-                      className="mr-2"
-                    />
-                    Yes
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="No"
-                      checked={accommodation === "No"}
-                      onChange={(e) => setAccommodation(e.target.value)}
-                      className="mr-2"
-                    />
-                    No
-                  </label>
-                </div>
-              </div>
-
-              {/* Transportation Preferences */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Want us to handle your transportation?
-                </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="Yes"
-                      checked={transportation === "Yes"}
-                      onChange={(e) => setTransportation(e.target.value)}
-                      className="mr-2"
-                    />
-                    Yes
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="No"
-                      checked={transportation === "No"}
-                      onChange={(e) => setTransportation(e.target.value)}
-                      className="mr-2"
-                    />
-                    No
-                  </label>
-                </div>
-              </div>
-
-              {/* Food Preferences */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Want us to handle your food preference?
-                </label>
-                <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="Yes"
-                      checked={foodPreference === "Yes"}
-                      onChange={(e) => setFoodPreference(e.target.value)}
-                      className="mr-2"
-                    />
-                    Yes
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="No"
-                      checked={foodPreference === "No"}
-                      onChange={(e) => setFoodPreference(e.target.value)}
-                      className="mr-2"
-                    />
-                    No
-                  </label>
-                </div>
-              </div>
-
-              {/* Share your Interests & Activities */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Share your Interests & Activities
-                </label>
-                <textarea
-                  value={interests}
-                  onChange={(e) => setInterests(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  rows="4"
-                  placeholder="What activities do you enjoy?"
+                <input
+                  type="date"
+                  value={trip.startDate}
+                  onChange={(e) => updateTripField("startDate", e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
                 />
               </div>
-
-              {/* Remarks/Request */}
-              <div className="mb-6">
-                <label className="block text-[#2E4A47] font-medium mb-2">
-                  Remarks/Request
+              <div className="w-1/2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
                 </label>
-                <textarea
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  rows="4"
-                  placeholder="Do you have any special request or notes?"
+                <input
+                  type="date"
+                  value={trip.endDate}
+                  onChange={(e) => updateTripField("endDate", e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
                 />
               </div>
+            </div>
 
-              {/* Terms Agreement */}
-              <div className="mb-6">
+            {/* Travel Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Travel Type
+              </label>
+              <div className="flex space-x-4">
                 <label className="flex items-center">
                   <input
-                    type="checkbox"
-                    checked={termsAgreed}
-                    onChange={(e) => setTermsAgreed(e.target.checked)}
-                    className="mr-2"
+                    type="radio"
+                    name="travelType"
+                    value="Solo"
+                    checked={trip.travelType === "Solo"}
+                    onChange={() => updateTripField("travelType", "Solo")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
                   />
-                  <span className="text-[#2E4A47]">
-                    By continuing this, you agree with the Terms & Conditions.
-                  </span>
+                  Solo
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="travelType"
+                    value="Group"
+                    checked={trip.travelType === "Group"}
+                    onChange={() => updateTripField("travelType", "Group")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  Group
                 </label>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="bg-[#9DAE11] text-white py-2 px-4 rounded-md font-medium hover:bg-[#8C9A0F] transition-colors">
-                CREATE YOUR TRAVEL PLAN
-              </button>
-            </form>
-          </div>
-
-          {/* Right Side: Sidebar */}
-          <div className="md:w-1/3 space-y-6">
-            {/* Destination */}
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-[#2E4A47] font-medium mb-2">Destination</h3>
-              {locations.map((location, index) => (
-                <div key={index} className="mb-2">
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => updateLocation(index, e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Enter destination"
-                  />
+              {trip.travelType === "Group" && (
+                <div className="mt-2 flex space-x-4">
+                  <div className="w-1/3 relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Male
+                    </label>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() =>
+                          updateTripField(
+                            "maleCount",
+                            Math.max(0, trip.maleCount - 1)
+                          )
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          remove
+                        </span>
+                      </button>
+                      <input
+                        type="number"
+                        value={trip.maleCount}
+                        onChange={(e) =>
+                          updateTripField(
+                            "maleCount",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
+                      />
+                      <button
+                        onClick={() =>
+                          updateTripField("maleCount", trip.maleCount + 1)
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          add
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="w-1/3 relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Female
+                    </label>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() =>
+                          updateTripField(
+                            "femaleCount",
+                            Math.max(0, trip.femaleCount - 1)
+                          )
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          remove
+                        </span>
+                      </button>
+                      <input
+                        type="number"
+                        value={trip.femaleCount}
+                        onChange={(e) =>
+                          updateTripField(
+                            "femaleCount",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
+                      />
+                      <button
+                        onClick={() =>
+                          updateTripField("femaleCount", trip.femaleCount + 1)
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          add
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="w-1/3 relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Children
+                    </label>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() =>
+                          updateTripField(
+                            "kidsCount",
+                            Math.max(0, trip.kidsCount - 1)
+                          )
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          remove
+                        </span>
+                      </button>
+                      <input
+                        type="number"
+                        value={trip.kidsCount}
+                        onChange={(e) =>
+                          updateTripField(
+                            "kidsCount",
+                            parseInt(e.target.value) || 0
+                          )
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
+                      />
+                      <button
+                        onClick={() =>
+                          updateTripField("kidsCount", trip.kidsCount + 1)
+                        }
+                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                        <span className="material-icons text-[#868D07]">
+                          add
+                        </span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              ))}
-              <button
-                onClick={handleAddLocation}
-                className="text-[#9DAE11] text-sm">
-                Add your custom location
-              </button>
-              <button
-                type="button"
-                className="w-full bg-[#9DAE11] text-white py-2 rounded-md mt-2">
-                SUBMIT
-              </button>
+              )}
             </div>
 
-            {/* Choose your accommodation */}
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-[#2E4A47] font-medium mb-2">
-                Choose your accommodation
-              </h3>
+            {/* Destination */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Destination
+              </label>
               <select
-                value={accommodationType}
-                onChange={(e) => setAccommodationType(e.target.value)}
-                className="w-full p-2 border rounded-md mb-2">
-                <option value="Hotel">Hotel</option>
-                <option value="5 Star">5 Star</option>
+                value={trip.destination}
+                onChange={(e) => updateTripField("destination", e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]">
+                <option value="">Select Your Desired Country</option>
+                <option value="france">France</option>
+                <option value="italy">Italy</option>
+                <option value="japan">Japan</option>
+                <option value="usa">USA</option>
+                {/* Add more options as needed */}
               </select>
-              <button
-                type="button"
-                className="w-full bg-[#9DAE11] text-white py-2 rounded-md">
-                SUBMIT
-              </button>
             </div>
 
-            {/* Choose your transportation */}
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-[#2E4A47] font-medium mb-2">
-                Choose your transportation
-              </h3>
-              <select
-                value={transportationType}
-                onChange={(e) => setTransportationType(e.target.value)}
-                className="w-full p-2 border rounded-md mb-2">
-                <option value="Car">Car</option>
-                <option value="Bus">Bus</option>
-              </select>
-              <button
-                type="button"
-                className="text-[#9DAE11] text-sm mb-2 block">
-                Add a new method
-              </button>
-              <button
-                type="button"
-                className="w-full bg-[#9DAE11] text-white py-2 rounded-md">
-                SUBMIT
-              </button>
+            {/* Accommodation Preferences */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Want to handle the accommodation?
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="accommodation"
+                    value="Yes"
+                    checked={trip.accommodation === "Yes"}
+                    onChange={() => updateTripField("accommodation", "Yes")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="accommodation"
+                    value="No"
+                    checked={trip.accommodation === "No"}
+                    onChange={() => updateTripField("accommodation", "No")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  No
+                </label>
+              </div>
             </div>
 
-            {/* Your Food Preferences */}
-            <div className="bg-white p-4 rounded-lg shadow-md">
-              <h3 className="text-[#2E4A47] font-medium mb-2">
-                Your Food Preferences
-              </h3>
-              <input
-                type="text"
-                value={foodPrefs}
-                onChange={(e) => setFoodPrefs(e.target.value)}
-                className="w-full p-2 border rounded-md mb-2"
-                placeholder="E.g., Halal Food, Vegetarian, Meat"
+            {/* Transportation Preferences */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Want to handle your transportation?
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="transportation"
+                    value="Yes"
+                    checked={trip.transportation === "Yes"}
+                    onChange={() => updateTripField("transportation", "Yes")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="transportation"
+                    value="No"
+                    checked={trip.transportation === "No"}
+                    onChange={() => updateTripField("transportation", "No")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+
+            {/* Food Preferences */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                What’s your food preference?
+              </label>
+              <div className="flex space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="foodPreference"
+                    value="Yes"
+                    checked={trip.foodPreference === "Yes"}
+                    onChange={() => updateTripField("foodPreference", "Yes")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  Yes
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="foodPreference"
+                    value="No"
+                    checked={trip.foodPreference === "No"}
+                    onChange={() => updateTripField("foodPreference", "No")}
+                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                  />
+                  No
+                </label>
+              </div>
+            </div>
+
+            {/* Interests & Activities */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Share your Interests & Activities
+              </label>
+              <textarea
+                value={trip.interests}
+                onChange={(e) => updateTripField("interests", e.target.value)}
+                placeholder="What activities do you enjoy?"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
+                rows="3"
               />
-              <button
-                type="button"
-                className="w-full bg-[#9DAE11] text-white py-2 rounded-md">
-                SUBMIT
-              </button>
             </div>
-          </div>
+
+            {/* Remarks/Request */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Remarks/Request
+              </label>
+              <textarea
+                value={trip.remarks}
+                onChange={(e) => updateTripField("remarks", e.target.value)}
+                placeholder="Do you have any special request in mind?"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
+                rows="3"
+              />
+            </div>
+
+            {/* Terms and Conditions */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={trip.termsAgreed}
+                onChange={(e) =>
+                  updateTripField("termsAgreed", e.target.checked)
+                }
+                className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+              />
+              <label className="text-sm text-gray-700">
+                By Continuing this, you agree with the{" "}
+                <a href="#" className="text-[#868D07] underline">
+                  Terms & Conditions
+                </a>
+              </label>
+            </div>
+            <button className="w-[250px] primary_btn !py-3 rounded-md flex items-center justify-center">
+              Plan your Trip with us
+            </button>
+          </form>
         </div>
       </div>
     </DashboardLayout>
