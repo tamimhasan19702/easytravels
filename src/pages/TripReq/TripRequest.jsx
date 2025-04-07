@@ -1,41 +1,101 @@
 /** @format */
 
-import DashboardLayout from "@/components/DashboardLayout";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTripRequest } from "../../context/TripRequestContext";
 import { db } from "../../../firebase.config";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import tripRequest from "../../assets/images/trip.svg";
+import tripRequestImg from "../../assets/images/trip.svg";
+import DashboardLayout from "@/components/DashboardLayout";
+import DateRangePicker from "@/components/triprequestcomponents/DateRangePicker";
+import Preloader from "@/components/Preloader";
 
-function TripRequest() {
+// Demo data for destinations
+const destinationData = {
+  france: {
+    locations: [
+      { value: "Paris", label: "Paris" },
+      { value: "Nice", label: "Nice" },
+      { value: "Lyon", label: "Lyon" },
+      { value: "Marseille", label: "Marseille" },
+    ],
+    additionalOptions: [
+      { key: "eiffelTower", label: "Eiffel Tower" },
+      { key: "louvreMuseum", label: "Louvre Museum" },
+      { key: "notreDame", label: "Notre-Dame Cathedral" },
+    ],
+  },
+  italy: {
+    locations: [
+      { value: "Rome", label: "Rome" },
+      { value: "Venice", label: "Venice" },
+      { value: "Florence", label: "Florence" },
+      { value: "Milan", label: "Milan" },
+    ],
+    additionalOptions: [
+      { key: "colosseum", label: "Colosseum" },
+      { key: "venetianCanals", label: "Venetian Canals" },
+      { key: "duomoFlorence", label: "Duomo in Florence" },
+    ],
+  },
+  japan: {
+    locations: [
+      { value: "Tokyo", label: "Tokyo" },
+      { value: "Osaka", label: "Osaka" },
+      { value: "Kyoto", label: "Kyoto" },
+      { value: "Hokkaido", label: "Hokkaido" },
+    ],
+    additionalOptions: [
+      { key: "mountFuji", label: "Mount Fuji" },
+      { key: "fushimiInari", label: "Fushimi Inari Shrine" },
+      { key: "shibuyaCrossing", label: "Shibuya Crossing" },
+    ],
+  },
+  usa: {
+    locations: [
+      { value: "New York", label: "New York" },
+      { value: "Los Angeles", label: "Los Angeles" },
+      { value: "Chicago", label: "Chicago" },
+      { value: "Miami", label: "Miami" },
+    ],
+    additionalOptions: [
+      { key: "statueOfLiberty", label: "Statue of Liberty" },
+      { key: "grandCanyon", label: "Grand Canyon" },
+      { key: "hollywood", label: "Hollywood" },
+    ],
+  },
+};
+
+const TripRequest = () => {
   const { user } = useUser();
   const navigate = useNavigate();
   const [dbUser, setDbUser] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tempDestination, setTempDestination] = useState("");
+  const [additionalOptions, setAdditionalOptions] = useState({});
+  const [customLocation, setCustomLocation] = useState("");
+  const [accommodationDetails, setAccommodationDetails] = useState({
+    type: "Hotel",
+    starRating: "5 Star",
+  });
+  const [transportationDetails, setTransportationDetails] = useState({
+    type: "Car",
+    customMethod: "",
+  });
+  const [foodPreferenceDetails, setFoodPreferenceDetails] = useState({
+    preference: "Halal Food, Vegetarian, Meat",
+  });
 
-  // Use the TripRequestContext
-  const {
-    trip,
-    setTrip,
-    locations,
-    setLocations,
-    accommodationType,
-    setAccommodationType,
-    transportationType,
-    setTransportationType,
-    foodPrefs,
-    setFoodPrefs,
-    handleAddLocation,
-    updateLocation,
-    handleSubmit,
-  } = useTripRequest();
+  const { trip, setTrip, locations, updateLocation, handleSubmit } =
+    useTripRequest();
 
+  // Fetch user data from Firestore
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!user || !user.email) {
+      if (!user?.email) {
         setError("User not authenticated or email not available.");
         setIsLoading(false);
         navigate("/");
@@ -44,24 +104,21 @@ function TripRequest() {
 
       try {
         setIsLoading(true);
-        setError(null);
-
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", user.email));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-          setError("No user found with this email in the database.");
+          setError("No user found with this email.");
           setIsLoading(false);
           return;
         }
 
-        const userData = querySnapshot.docs[0].data();
-        setDbUser(userData);
-        setIsLoading(false);
+        setDbUser(querySnapshot.docs[0].data());
       } catch (err) {
-        console.error("Error fetching user data from Firestore:", err);
-        setError("Failed to fetch user data. Please try again later.");
+        console.error("Error fetching user data:", err);
+        setError("Failed to fetch user data.");
+      } finally {
         setIsLoading(false);
       }
     };
@@ -69,392 +126,499 @@ function TripRequest() {
     fetchUserData();
   }, [user, navigate]);
 
+  // Automatically open modal when a destination is selected and reset additional options
+  useEffect(() => {
+    if (tempDestination) {
+      setIsModalOpen(true);
+      // Reset additional options based on the selected destination
+      const initialOptions = {};
+      if (destinationData[tempDestination]) {
+        destinationData[tempDestination].additionalOptions.forEach((opt) => {
+          initialOptions[opt.key] = false;
+        });
+      }
+      setAdditionalOptions(initialOptions);
+    }
+  }, [tempDestination]);
+
+  // Update trip state whenever accommodationDetails changes
+  useEffect(() => {
+    if (trip.accommodation === "Yes") {
+      updateTripField("accommodationDetails", accommodationDetails);
+    }
+  }, [accommodationDetails]);
+
+  // Update trip state whenever transportationDetails changes
+  useEffect(() => {
+    if (trip.transportation === "Yes") {
+      updateTripField("transportationDetails", transportationDetails);
+    }
+  }, [transportationDetails]);
+
+  // Update trip state whenever foodPreferenceDetails changes
+  useEffect(() => {
+    if (trip.foodPreference === "Yes") {
+      updateTripField("foodPreferenceDetails", foodPreferenceDetails);
+    }
+  }, [foodPreferenceDetails]);
+
+  // Helper functions
+  const updateTripField = (field, value) => {
+    setTrip((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDestinationChange = (e) => {
+    const value = e.target.value;
+    setTempDestination(value);
+  };
+
+  const handleModalClose = () => {
+    // Save the data when the modal is closed
+    updateTripField("destination", tempDestination);
+    updateTripField("additionalOptions", additionalOptions);
+    if (customLocation)
+      updateTripField("locations", [...locations, customLocation]);
+    setIsModalOpen(false);
+  };
+
+  // Render states
+  if (isLoading) return <Preloader />;
+  if (error)
+    return <div className="text-red-500 text-center py-10">{error}</div>;
   if (!user) {
     navigate("/");
     return null;
   }
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
-
-  // Helper function to update the trip state
-  const updateTripField = (field, value) => {
-    setTrip((prevTrip) => ({
-      ...prevTrip,
-      [field]: value,
-    }));
-  };
-
   return (
     <DashboardLayout>
-      <div className="bg-[#F5F6F5] min-h-screen p-6">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center md:space-x-8">
-          <div className="md:w-2/3">
-            <h1 className="text-5xl font-bold text-[#2E4A47] mb-6">
-              MAKE YOUR TRAVEL PLAN WITH US
-            </h1>
-          </div>
-          <div className="md:w-1/3 flex justify-center md:justify-end">
-            <img
-              src={tripRequest}
-              alt="Travel Illustration"
-              className="w-full max-w-xs h-auto"
-            />
-          </div>
+      <div className="min-h-screen bg-[#F5F6F5] p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center gap-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#2E4A47] md:w-2/3">
+            MAKE YOUR TRAVEL PLAN WITH US
+          </h1>
+          <img
+            src={tripRequestImg}
+            alt="Travel Illustration"
+            className="w-full max-w-xs mx-auto md:w-1/3"
+          />
         </div>
 
-        {/* Form Section */}
-        <div className="mt-8 px-4">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Start and End Date */}
-            <div className="flex space-x-4">
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  value={trip.startDate}
-                  onChange={(e) => updateTripField("startDate", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                />
-              </div>
-              <div className="w-1/2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  value={trip.endDate}
-                  onChange={(e) => updateTripField("endDate", e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                />
-              </div>
-            </div>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6 w-full">
+          <DateRangePicker
+            startDate={trip.startDate}
+            endDate={trip.endDate}
+            updateTripField={updateTripField}
+          />
 
-            {/* Travel Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Travel Type
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="travelType"
-                    value="Solo"
-                    checked={trip.travelType === "Solo"}
-                    onChange={() => updateTripField("travelType", "Solo")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  Solo
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="travelType"
-                    value="Group"
-                    checked={trip.travelType === "Group"}
-                    onChange={() => updateTripField("travelType", "Group")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  Group
-                </label>
-              </div>
+          <SelectField
+            label="Destination"
+            value={tempDestination}
+            onChange={handleDestinationChange}
+            options={[
+              { value: "", label: "Select Your Desired Country" },
+              { value: "france", label: "France" },
+              { value: "italy", label: "Italy" },
+              { value: "japan", label: "Japan" },
+              { value: "usa", label: "USA" },
+            ]}
+          />
 
-              {trip.travelType === "Group" && (
-                <div className="mt-2 flex space-x-4">
-                  <div className="w-1/3 relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Male
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        onClick={() =>
-                          updateTripField(
-                            "maleCount",
-                            Math.max(0, trip.maleCount - 1)
-                          )
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        type="number"
-                        value={trip.maleCount}
-                        onChange={(e) =>
-                          updateTripField(
-                            "maleCount",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                      />
-                      <button
-                        onClick={() =>
-                          updateTripField("maleCount", trip.maleCount + 1)
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="w-1/3 relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Female
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        onClick={() =>
-                          updateTripField(
-                            "femaleCount",
-                            Math.max(0, trip.femaleCount - 1)
-                          )
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        type="number"
-                        value={trip.femaleCount}
-                        onChange={(e) =>
-                          updateTripField(
-                            "femaleCount",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                      />
-                      <button
-                        onClick={() =>
-                          updateTripField("femaleCount", trip.femaleCount + 1)
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <div className="w-1/3 relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Children
-                    </label>
-                    <div className="flex items-center">
-                      <button
-                        onClick={() =>
-                          updateTripField(
-                            "kidsCount",
-                            Math.max(0, trip.kidsCount - 1)
-                          )
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          remove
-                        </span>
-                      </button>
-                      <input
-                        type="number"
-                        value={trip.kidsCount}
-                        onChange={(e) =>
-                          updateTripField(
-                            "kidsCount",
-                            parseInt(e.target.value) || 0
-                          )
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                      />
-                      <button
-                        onClick={() =>
-                          updateTripField("kidsCount", trip.kidsCount + 1)
-                        }
-                        className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                        <span className="material-icons text-[#868D07]">
-                          add
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          <RadioGroup
+            label="Travel Type"
+            name="travelType"
+            value={trip.travelType}
+            onChange={(value) => updateTripField("travelType", value)}
+            options={["Solo", "Group"]}
+          />
 
-            {/* Destination */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Destination
-              </label>
-              <select
-                value={trip.destination}
-                onChange={(e) => updateTripField("destination", e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]">
-                <option value="">Select Your Desired Country</option>
-                <option value="france">France</option>
-                <option value="italy">Italy</option>
-                <option value="japan">Japan</option>
-                <option value="usa">USA</option>
-                {/* Add more options as needed */}
-              </select>
-            </div>
+          {trip.travelType === "Group" && (
+            <GroupTravelFields trip={trip} updateTripField={updateTripField} />
+          )}
 
-            {/* Accommodation Preferences */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Want to handle the accommodation?
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="accommodation"
-                    value="Yes"
-                    checked={trip.accommodation === "Yes"}
-                    onChange={() => updateTripField("accommodation", "Yes")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="accommodation"
-                    value="No"
-                    checked={trip.accommodation === "No"}
-                    onChange={() => updateTripField("accommodation", "No")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  No
-                </label>
-              </div>
-            </div>
+          <RadioGroup
+            label="Want to handle the accommodation?"
+            name="accommodation"
+            value={trip.accommodation}
+            onChange={(value) => updateTripField("accommodation", value)}
+            options={["Yes", "No"]}
+          />
 
-            {/* Transportation Preferences */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Want to handle your transportation?
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="transportation"
-                    value="Yes"
-                    checked={trip.transportation === "Yes"}
-                    onChange={() => updateTripField("transportation", "Yes")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="transportation"
-                    value="No"
-                    checked={trip.transportation === "No"}
-                    onChange={() => updateTripField("transportation", "No")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  No
-                </label>
-              </div>
-            </div>
-
-            {/* Food Preferences */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                What’s your food preference?
-              </label>
-              <div className="flex space-x-4">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="foodPreference"
-                    value="Yes"
-                    checked={trip.foodPreference === "Yes"}
-                    onChange={() => updateTripField("foodPreference", "Yes")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  Yes
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="foodPreference"
-                    value="No"
-                    checked={trip.foodPreference === "No"}
-                    onChange={() => updateTripField("foodPreference", "No")}
-                    className="mr-2 text-[#868D07] focus:ring-[#868D07]"
-                  />
-                  No
-                </label>
-              </div>
-            </div>
-
-            {/* Interests & Activities */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Share your Interests & Activities
-              </label>
-              <textarea
-                value={trip.interests}
-                onChange={(e) => updateTripField("interests", e.target.value)}
-                placeholder="What activities do you enjoy?"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                rows="3"
-              />
-            </div>
-
-            {/* Remarks/Request */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Remarks/Request
-              </label>
-              <textarea
-                value={trip.remarks}
-                onChange={(e) => updateTripField("remarks", e.target.value)}
-                placeholder="Do you have any special request in mind?"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#868D07]"
-                rows="3"
-              />
-            </div>
-
-            {/* Terms and Conditions */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                checked={trip.termsAgreed}
+          {/* Conditional Accommodation Details Section */}
+          {trip.accommodation === "Yes" && (
+            <div className="border rounded-lg p-4 bg-white shadow-md">
+              <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
+                Choose your accommodation
+              </h3>
+              <SelectField
+                label="Accommodation Type"
+                value={accommodationDetails.type}
                 onChange={(e) =>
-                  updateTripField("termsAgreed", e.target.checked)
+                  setAccommodationDetails((prev) => ({
+                    ...prev,
+                    type: e.target.value,
+                  }))
                 }
-                className="mr-2 text-[#868D07] focus:ring-[#868D07]"
+                options={[
+                  { value: "Hotel", label: "Hotel" },
+                  { value: "Apartment", label: "Apartment" },
+                  { value: "Hostel", label: "Hostel" },
+                  { value: "Resort", label: "Resort" },
+                ]}
               />
-              <label className="text-sm text-gray-700">
-                By Continuing this, you agree with the{" "}
-                <a href="#" className="text-[#868D07] underline">
-                  Terms & Conditions
-                </a>
-              </label>
+              <SelectField
+                label="Star Rating"
+                value={accommodationDetails.starRating}
+                onChange={(e) =>
+                  setAccommodationDetails((prev) => ({
+                    ...prev,
+                    starRating: e.target.value,
+                  }))
+                }
+                options={[
+                  { value: "5 Star", label: "5 Star" },
+                  { value: "4 Star", label: "4 Star" },
+                  { value: "3 Star", label: "3 Star" },
+                  { value: "2 Star", label: "2 Star" },
+                  { value: "1 Star", label: "1 Star" },
+                ]}
+              />
             </div>
-            <button className="w-[250px] primary_btn !py-3 rounded-md flex items-center justify-center">
-              Plan your Trip with us
-            </button>
-          </form>
-        </div>
+          )}
+
+          <RadioGroup
+            label="Want to handle your transportation?"
+            name="transportation"
+            value={trip.transportation}
+            onChange={(value) => updateTripField("transportation", value)}
+            options={["Yes", "No"]}
+          />
+
+          {/* Conditional Transportation Details Section */}
+          {trip.transportation === "Yes" && (
+            <div className="border rounded-lg p-4 bg-white shadow-md">
+              <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
+                Choose your transportation
+              </h3>
+              <SelectField
+                label="Transportation Type"
+                value={transportationDetails.type}
+                onChange={(e) =>
+                  setTransportationDetails((prev) => ({
+                    ...prev,
+                    type: e.target.value,
+                  }))
+                }
+                options={[
+                  { value: "Car", label: "Car" },
+                  { value: "Bus", label: "Bus" },
+                  { value: "Train", label: "Train" },
+                  { value: "Plane", label: "Plane" },
+                ]}
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Add a new method
+                </label>
+                <input
+                  type="text"
+                  value={transportationDetails.customMethod}
+                  onChange={(e) =>
+                    setTransportationDetails((prev) => ({
+                      ...prev,
+                      customMethod: e.target.value,
+                    }))
+                  }
+                  placeholder="Add a new method"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
+                />
+              </div>
+            </div>
+          )}
+
+          <RadioGroup
+            label="What’s your food preference?"
+            name="foodPreference"
+            value={trip.foodPreference}
+            onChange={(value) => updateTripField("foodPreference", value)}
+            options={["Yes", "No"]}
+          />
+
+          {/* Conditional Food Preference Details Section */}
+          {trip.foodPreference === "Yes" && (
+            <div className="border rounded-lg p-4 bg-white shadow-md">
+              <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
+                Your food preference
+              </h3>
+              <SelectField
+                label="Food Preference"
+                value={foodPreferenceDetails.preference}
+                onChange={(e) =>
+                  setFoodPreferenceDetails((prev) => ({
+                    ...prev,
+                    preference: e.target.value,
+                  }))
+                }
+                options={[
+                  {
+                    value: "Halal Food, Vegetarian, Meat",
+                    label: "Halal Food, Vegetarian, Meat",
+                  },
+                  { value: "Vegetarian", label: "Vegetarian" },
+                  { value: "Vegan", label: "Vegan" },
+                  { value: "Gluten-Free", label: "Gluten-Free" },
+                  { value: "No Preference", label: "No Preference" },
+                ]}
+              />
+            </div>
+          )}
+
+          <TextAreaField
+            label="Share your Interests & Activities"
+            value={trip.interests}
+            onChange={(e) => updateTripField("interests", e.target.value)}
+            placeholder="What activities do you enjoy?"
+          />
+
+          <TextAreaField
+            label="Remarks/Request"
+            value={trip.remarks}
+            onChange={(e) => updateTripField("remarks", e.target.value)}
+            placeholder="Do you have any special request in mind?"
+          />
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={trip.termsAgreed}
+              onChange={(e) => updateTripField("termsAgreed", e.target.checked)}
+              className="text-[#2E4A47] focus:ring-[#2E4A47]"
+            />
+            <label className="text-sm text-gray-700">
+              By continuing, you agree with the{" "}
+              <a href="#" className="text-[#2E4A47] underline">
+                Terms & Conditions
+              </a>
+              .
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full  py-3 rounded-lg primary_btn transition duration-300">
+            CREATE YOUR TRAVEL PLAN
+          </button>
+        </form>
+
+        {/* Modal */}
+        {isModalOpen && (
+          <DestinationModal
+            tempDestination={tempDestination}
+            setTempDestination={setTempDestination}
+            locations={locations}
+            updateLocation={updateLocation}
+            additionalOptions={additionalOptions}
+            setAdditionalOptions={setAdditionalOptions}
+            customLocation={customLocation}
+            setCustomLocation={setCustomLocation}
+            onClose={handleModalClose}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
-}
+};
+
+// Reusable Components
+
+const SelectField = ({ label, value, onChange, options }) => (
+  <div>
+    {label && (
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+    )}
+    <select
+      value={value}
+      onChange={onChange}
+      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]">
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+const RadioGroup = ({ label, name, value, onChange, options }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label}
+    </label>
+    <div className="flex gap-4">
+      {options.map((option) => (
+        <label key={option} className="flex items-center">
+          <input
+            type="radio"
+            name={name}
+            value={option}
+            checked={value === option}
+            onChange={() => onChange(option)}
+            className="mr-2 text-[#2E4A47] focus:ring-[#2E4A47]"
+          />
+          {option}
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+const CounterField = ({ label, value, onChange }) => (
+  <div className="flex items-center justify-between">
+    <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="w-8 h-8 border rounded-full text-[#2E4A47] hover:bg-[#2E4A47] hover:text-white transition">
+        −
+      </button>
+      <span className="w-12 text-center">{value}</span>
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        className="w-8 h-8 border rounded-full text-[#2E4A47] hover:bg-[#2E4A47] hover:text-white transition">
+        +
+      </button>
+    </div>
+  </div>
+);
+
+const GroupTravelFields = ({ trip, updateTripField }) => (
+  <div className="space-y-4 mt-4">
+    <CounterField
+      label="Male"
+      value={trip.maleCount}
+      onChange={(value) => updateTripField("maleCount", value)}
+    />
+    <CounterField
+      label="Female"
+      value={trip.femaleCount}
+      onChange={(value) => updateTripField("femaleCount", value)}
+    />
+    <CounterField
+      label="Kids"
+      value={trip.kidsCount}
+      onChange={(value) => updateTripField("kidsCount", value)}
+    />
+  </div>
+);
+
+const TextAreaField = ({ label, value, onChange, placeholder }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label}
+    </label>
+    <textarea
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47]"
+      rows="3"
+    />
+  </div>
+);
+
+const DestinationModal = ({
+  tempDestination,
+  setTempDestination,
+  locations,
+  updateLocation,
+  additionalOptions,
+  setAdditionalOptions,
+  customLocation,
+  setCustomLocation,
+  onClose,
+}) => {
+  const selectedDestinationData = tempDestination
+    ? destinationData[tempDestination]
+    : null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 className="text-lg font-semibold text-[#2E4A47] mb-4">
+          Destination
+        </h2>
+
+        <SelectField
+          value={tempDestination}
+          onChange={(e) => setTempDestination(e.target.value)}
+          options={[
+            { value: "", label: "Select Your Desired Country" },
+            { value: "france", label: "France" },
+            { value: "italy", label: "Italy" },
+            { value: "japan", label: "Japan" },
+            { value: "usa", label: "USA" },
+          ]}
+        />
+
+        {selectedDestinationData && (
+          <>
+            {locations.map((location, index) => (
+              <SelectField
+                key={index}
+                value={location}
+                onChange={(e) => updateLocation(index, e.target.value)}
+                options={[
+                  { value: "", label: "Select a location" },
+                  ...selectedDestinationData.locations,
+                ]}
+              />
+            ))}
+
+            <div className="space-y-2 mb-4">
+              {selectedDestinationData.additionalOptions.map((option) => (
+                <label key={option.key} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={additionalOptions[option.key] || false}
+                    onChange={(e) =>
+                      setAdditionalOptions({
+                        ...additionalOptions,
+                        [option.key]: e.target.checked,
+                      })
+                    }
+                    className="mr-2 text-[#2E4A47] focus:ring-[#2E4A47]"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <input
+          type="text"
+          value={customLocation}
+          onChange={(e) => setCustomLocation(e.target.value)}
+          placeholder="Add your custom location"
+          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] mb-4"
+        />
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default TripRequest;
