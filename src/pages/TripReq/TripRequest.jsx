@@ -10,62 +10,7 @@ import tripRequestImg from "../../assets/images/trip.svg";
 import DashboardLayout from "@/components/DashboardLayout";
 import DateRangePicker from "@/components/triprequestcomponents/DateRangePicker";
 import Preloader from "@/components/Preloader";
-
-// Demo data for destinations
-const destinationData = {
-  france: {
-    locations: [
-      { value: "Paris", label: "Paris" },
-      { value: "Nice", label: "Nice" },
-      { value: "Lyon", label: "Lyon" },
-      { value: "Marseille", label: "Marseille" },
-    ],
-    additionalOptions: [
-      { key: "eiffelTower", label: "Eiffel Tower" },
-      { key: "louvreMuseum", label: "Louvre Museum" },
-      { key: "notreDame", label: "Notre-Dame Cathedral" },
-    ],
-  },
-  italy: {
-    locations: [
-      { value: "Rome", label: "Rome" },
-      { value: "Venice", label: "Venice" },
-      { value: "Florence", label: "Florence" },
-      { value: "Milan", label: "Milan" },
-    ],
-    additionalOptions: [
-      { key: "colosseum", label: "Colosseum" },
-      { key: "venetianCanals", label: "Venetian Canals" },
-      { key: "duomoFlorence", label: "Duomo in Florence" },
-    ],
-  },
-  japan: {
-    locations: [
-      { value: "Tokyo", label: "Tokyo" },
-      { value: "Osaka", label: "Osaka" },
-      { value: "Kyoto", label: "Kyoto" },
-      { value: "Hokkaido", label: "Hokkaido" },
-    ],
-    additionalOptions: [
-      { key: "mountFuji", label: "Mount Fuji" },
-      { key: "fushimiInari", label: "Fushimi Inari Shrine" },
-      { key: "shibuyaCrossing", label: "Shibuya Crossing" },
-    ],
-  },
-  usa: {
-    locations: [
-      { value: "New York", label: "New York" },
-      { value: "Los Angeles", label: "Los Angeles" },
-      { value: "Chicago", label: "Chicago" },
-      { value: "Miami", label: "Miami" },
-    ],
-    additionalOptions: [
-      { key: "statueOfLiberty", label: "Statue of Liberty" },
-      { key: "grandCanyon", label: "Grand Canyon" },
-      { key: "hollywood", label: "Hollywood" },
-    ],
-  },
-};
+import { destinationData } from "@/constant/destinationData";
 
 const TripRequest = () => {
   const { user } = useUser();
@@ -74,20 +19,11 @@ const TripRequest = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tempDestination, setTempDestination] = useState("");
+  const [tempDestinations, setTempDestinations] = useState([]);
+  const [customLocations, setCustomLocations] = useState([""]);
   const [additionalOptions, setAdditionalOptions] = useState({});
-  const [customLocation, setCustomLocation] = useState("");
-  const [accommodationDetails, setAccommodationDetails] = useState({
-    type: "Hotel",
-    starRating: "5 Star",
-  });
-  const [transportationDetails, setTransportationDetails] = useState({
-    type: "Car",
-    customMethod: "",
-  });
-  const [foodPreferenceDetails, setFoodPreferenceDetails] = useState({
-    preference: "Halal Food, Vegetarian, Meat",
-  });
+  const [transportationMethods, setTransportationMethods] = useState([""]);
+  const [foodPreferences, setFoodPreferences] = useState([""]);
 
   const { trip, setTrip, locations, updateLocation, handleSubmit } =
     useTripRequest();
@@ -126,59 +62,106 @@ const TripRequest = () => {
     fetchUserData();
   }, [user, navigate]);
 
-  // Automatically open modal when a destination is selected and reset additional options
-  useEffect(() => {
-    if (tempDestination) {
-      setIsModalOpen(true);
-      // Reset additional options based on the selected destination
-      const initialOptions = {};
-      if (destinationData[tempDestination]) {
-        destinationData[tempDestination].additionalOptions.forEach((opt) => {
-          initialOptions[opt.key] = false;
-        });
-      }
-      setAdditionalOptions(initialOptions);
-    }
-  }, [tempDestination]);
-
-  // Update trip state whenever accommodationDetails changes
-  useEffect(() => {
-    if (trip.accommodation === "Yes") {
-      updateTripField("accommodationDetails", accommodationDetails);
-    }
-  }, [accommodationDetails]);
-
-  // Update trip state whenever transportationDetails changes
-  useEffect(() => {
-    if (trip.transportation === "Yes") {
-      updateTripField("transportationDetails", transportationDetails);
-    }
-  }, [transportationDetails]);
-
-  // Update trip state whenever foodPreferenceDetails changes
-  useEffect(() => {
-    if (trip.foodPreference === "Yes") {
-      updateTripField("foodPreferenceDetails", foodPreferenceDetails);
-    }
-  }, [foodPreferenceDetails]);
-
   // Helper functions
   const updateTripField = (field, value) => {
-    setTrip((prev) => ({ ...prev, [field]: value }));
+    setTrip((prev) => ({
+      ...prev,
+      userData: {
+        ...prev.userData,
+        tripDetails: {
+          ...prev.userData.tripDetails,
+          [field]: value,
+        },
+      },
+    }));
   };
 
-  const handleDestinationChange = (e) => {
-    const value = e.target.value;
-    setTempDestination(value);
+  const handleAddCustomLocation = () => {
+    setCustomLocations([...customLocations, ""]);
+  };
+
+  const handleCustomLocationChange = (index, value) => {
+    const updatedLocations = [...customLocations];
+    updatedLocations[index] = value;
+    setCustomLocations(updatedLocations);
+  };
+
+  const handleDeleteCustomLocation = (index) => {
+    if (customLocations.length > 1) {
+      const updatedLocations = customLocations.filter((_, i) => i !== index);
+      setCustomLocations(updatedLocations);
+    }
+  };
+
+  const handleAddTransportation = () => {
+    setTransportationMethods([...transportationMethods, ""]);
+  };
+
+  const handleTransportationChange = (index, value) => {
+    const updatedMethods = [...transportationMethods];
+    updatedMethods[index] = value;
+    setTransportationMethods(updatedMethods);
+    updateTripField("transportationDetails", {
+      ...trip.userData.tripDetails.transportationDetails,
+      methods: updatedMethods,
+    });
+  };
+
+  const handleDeleteTransportation = (index) => {
+    if (transportationMethods.length > 1) {
+      const updatedMethods = transportationMethods.filter(
+        (_, i) => i !== index
+      );
+      setTransportationMethods(updatedMethods);
+      updateTripField("transportationDetails", {
+        ...trip.userData.tripDetails.transportationDetails,
+        methods: updatedMethods,
+      });
+    }
+  };
+
+  const handleAddFoodPreference = () => {
+    setFoodPreferences([...foodPreferences, ""]);
+  };
+
+  const handleFoodPreferenceChange = (index, value) => {
+    const updatedPrefs = [...foodPreferences];
+    updatedPrefs[index] = value;
+    setFoodPreferences(updatedPrefs);
+    updateTripField("foodPreferenceDetails", { preferences: updatedPrefs });
+  };
+
+  const handleDeleteFoodPreference = (index) => {
+    if (foodPreferences.length > 1) {
+      const updatedPrefs = foodPreferences.filter((_, i) => i !== index);
+      setFoodPreferences(updatedPrefs);
+      updateTripField("foodPreferenceDetails", { preferences: updatedPrefs });
+    }
+  };
+
+  const handleSelectDestinations = () => {
+    setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
-    // Save the data when the modal is closed
-    updateTripField("destination", tempDestination);
+    updateTripField("destinations", tempDestinations);
     updateTripField("additionalOptions", additionalOptions);
-    if (customLocation)
-      updateTripField("locations", [...locations, customLocation]);
+    updateTripField(
+      "locations",
+      customLocations.filter((loc) => loc !== "")
+    );
     setIsModalOpen(false);
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await handleSubmit(e);
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Submission error:", error);
+      setError("Failed to submit trip request. Please try again.");
+    }
   };
 
   // Render states
@@ -193,7 +176,6 @@ const TripRequest = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-[#F5F6F5] p-6">
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center gap-8">
           <h1 className="text-4xl md:text-5xl font-bold text-[#2E4A47] md:w-2/3">
             MAKE YOUR TRAVEL PLAN WITH US
@@ -205,61 +187,63 @@ const TripRequest = () => {
           />
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6 w-full">
+        <form onSubmit={onSubmit} className="mt-8 space-y-6 w-full">
           <DateRangePicker
-            startDate={trip.startDate}
-            endDate={trip.endDate}
+            startDate={trip.userData.tripDetails.startDate}
+            endDate={trip.userData.tripDetails.endDate}
             updateTripField={updateTripField}
           />
 
-          <SelectField
-            label="Destination"
-            value={tempDestination}
-            onChange={handleDestinationChange}
-            options={[
-              { value: "", label: "Select Your Desired Country" },
-              { value: "france", label: "France" },
-              { value: "italy", label: "Italy" },
-              { value: "japan", label: "Japan" },
-              { value: "usa", label: "USA" },
-            ]}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Destinations
+            </label>
+            <button
+              type="button"
+              onClick={handleSelectDestinations}
+              className="w-full p-3 border rounded-lg bg-[#F5F6F5] text-left">
+              {tempDestinations.length > 0
+                ? tempDestinations.join(", ")
+                : "Select Destinations"}
+            </button>
+          </div>
 
           <RadioGroup
             label="Travel Type"
             name="travelType"
-            value={trip.travelType}
+            value={trip.userData.tripDetails.travelType}
             onChange={(value) => updateTripField("travelType", value)}
             options={["Solo", "Group"]}
           />
 
-          {trip.travelType === "Group" && (
-            <GroupTravelFields trip={trip} updateTripField={updateTripField} />
+          {trip.userData.tripDetails.travelType === "Group" && (
+            <GroupTravelFields
+              trip={trip.userData.tripDetails}
+              updateTripField={updateTripField}
+            />
           )}
 
           <RadioGroup
             label="Want to handle the accommodation?"
             name="accommodation"
-            value={trip.accommodation}
+            value={trip.userData.tripDetails.accommodation}
             onChange={(value) => updateTripField("accommodation", value)}
             options={["Yes", "No"]}
           />
 
-          {/* Conditional Accommodation Details Section */}
-          {trip.accommodation === "Yes" && (
+          {trip.userData.tripDetails.accommodation === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
                 Choose your accommodation
               </h3>
               <SelectField
                 label="Accommodation Type"
-                value={accommodationDetails.type}
+                value={trip.userData.tripDetails.accommodationDetails.type}
                 onChange={(e) =>
-                  setAccommodationDetails((prev) => ({
-                    ...prev,
+                  updateTripField("accommodationDetails", {
+                    ...trip.userData.tripDetails.accommodationDetails,
                     type: e.target.value,
-                  }))
+                  })
                 }
                 options={[
                   { value: "Hotel", label: "Hotel" },
@@ -270,12 +254,14 @@ const TripRequest = () => {
               />
               <SelectField
                 label="Star Rating"
-                value={accommodationDetails.starRating}
+                value={
+                  trip.userData.tripDetails.accommodationDetails.starRating
+                }
                 onChange={(e) =>
-                  setAccommodationDetails((prev) => ({
-                    ...prev,
+                  updateTripField("accommodationDetails", {
+                    ...trip.userData.tripDetails.accommodationDetails,
                     starRating: e.target.value,
-                  }))
+                  })
                 }
                 options={[
                   { value: "5 Star", label: "5 Star" },
@@ -291,25 +277,24 @@ const TripRequest = () => {
           <RadioGroup
             label="Want to handle your transportation?"
             name="transportation"
-            value={trip.transportation}
+            value={trip.userData.tripDetails.transportation}
             onChange={(value) => updateTripField("transportation", value)}
             options={["Yes", "No"]}
           />
 
-          {/* Conditional Transportation Details Section */}
-          {trip.transportation === "Yes" && (
+          {trip.userData.tripDetails.transportation === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
                 Choose your transportation
               </h3>
               <SelectField
-                label="Transportation Type"
-                value={transportationDetails.type}
+                label="Primary Transportation Type"
+                value={trip.userData.tripDetails.transportationDetails.type}
                 onChange={(e) =>
-                  setTransportationDetails((prev) => ({
-                    ...prev,
+                  updateTripField("transportationDetails", {
+                    ...trip.userData.tripDetails.transportationDetails,
                     type: e.target.value,
-                  }))
+                  })
                 }
                 options={[
                   { value: "Car", label: "Car" },
@@ -318,73 +303,94 @@ const TripRequest = () => {
                   { value: "Plane", label: "Plane" },
                 ]}
               />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Add a new method
-                </label>
-                <input
-                  type="text"
-                  value={transportationDetails.customMethod}
-                  onChange={(e) =>
-                    setTransportationDetails((prev) => ({
-                      ...prev,
-                      customMethod: e.target.value,
-                    }))
-                  }
-                  placeholder="Add a new method"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
-                />
-              </div>
+              {transportationMethods.map((method, index) => (
+                <div key={index} className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={method}
+                    onChange={(e) =>
+                      handleTransportationChange(index, e.target.value)
+                    }
+                    placeholder={`Additional Method ${index + 1}`}
+                    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
+                  />
+                  {transportationMethods.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteTransportation(index)}
+                      className="text-red-500 hover:text-red-700">
+                      Delete
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleAddTransportation}
+                className="mt-2 text-[#2E4A47] hover:underline">
+                + Add Another Transportation Method
+              </button>
             </div>
           )}
 
           <RadioGroup
             label="What’s your food preference?"
             name="foodPreference"
-            value={trip.foodPreference}
+            value={trip.userData.tripDetails.foodPreference}
             onChange={(value) => updateTripField("foodPreference", value)}
             options={["Yes", "No"]}
           />
 
-          {/* Conditional Food Preference Details Section */}
-          {trip.foodPreference === "Yes" && (
+          {trip.userData.tripDetails.foodPreference === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
-                Your food preference
+                Your food preferences
               </h3>
-              <SelectField
-                label="Food Preference"
-                value={foodPreferenceDetails.preference}
-                onChange={(e) =>
-                  setFoodPreferenceDetails((prev) => ({
-                    ...prev,
-                    preference: e.target.value,
-                  }))
-                }
-                options={[
-                  {
-                    value: "Halal Food, Vegetarian, Meat",
-                    label: "Halal Food, Vegetarian, Meat",
-                  },
-                  { value: "Vegetarian", label: "Vegetarian" },
-                  { value: "Vegan", label: "Vegan" },
-                  { value: "Gluten-Free", label: "Gluten-Free" },
-                  { value: "No Preference", label: "No Preference" },
-                ]}
-              />
+              {foodPreferences.map((pref, index) => (
+                <div key={index} className="mt-2 flex items-center gap-2">
+                  <SelectField
+                    value={pref}
+                    onChange={(e) =>
+                      handleFoodPreferenceChange(index, e.target.value)
+                    }
+                    options={[
+                      { value: "", label: "Select preference" },
+                      { value: "Halal Food", label: "Halal Food" },
+                      { value: "Vegetarian", label: "Vegetarian" },
+                      { value: "Vegan", label: "Vegan" },
+                      { value: "Gluten-Free", label: "Gluten-Free" },
+                      { value: "No Preference", label: "No Preference" },
+                    ]}
+                  />
+                  {foodPreferences.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFoodPreference(index)}
+                      className="text-red-500 hover:text-red-700">
+                      Delete
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleAddFoodPreference}
+                className="mt-2 text-[#2E4A47] hover:underline">
+                + Add Another Food Preference
+              </button>
             </div>
           )}
 
           <TextAreaField
             label="Share your Interests & Activities"
-            value={trip.interests}
+            value={trip.userData.tripDetails.interests}
             onChange={(e) => updateTripField("interests", e.target.value)}
             placeholder="What activities do you enjoy?"
           />
 
           <TextAreaField
             label="Remarks/Request"
-            value={trip.remarks}
+            value={trip.userData.tripDetails.remarks}
             onChange={(e) => updateTripField("remarks", e.target.value)}
             placeholder="Do you have any special request in mind?"
           />
@@ -392,7 +398,7 @@ const TripRequest = () => {
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={trip.termsAgreed}
+              checked={trip.userData.tripDetails.termsAgreed}
               onChange={(e) => updateTripField("termsAgreed", e.target.checked)}
               className="text-[#2E4A47] focus:ring-[#2E4A47]"
             />
@@ -407,22 +413,21 @@ const TripRequest = () => {
 
           <button
             type="submit"
-            className="w-full  py-3 rounded-lg primary_btn transition duration-300">
+            className="w-full py-3 rounded-lg primary_btn transition duration-300">
             CREATE YOUR TRAVEL PLAN
           </button>
         </form>
 
-        {/* Modal */}
         {isModalOpen && (
           <DestinationModal
-            tempDestination={tempDestination}
-            setTempDestination={setTempDestination}
-            locations={locations}
-            updateLocation={updateLocation}
+            tempDestinations={tempDestinations}
+            setTempDestinations={setTempDestinations}
+            customLocations={customLocations}
+            handleCustomLocationChange={handleCustomLocationChange}
+            handleAddCustomLocation={handleAddCustomLocation}
+            handleDeleteCustomLocation={handleDeleteCustomLocation}
             additionalOptions={additionalOptions}
             setAdditionalOptions={setAdditionalOptions}
-            customLocation={customLocation}
-            setCustomLocation={setCustomLocation}
             onClose={handleModalClose}
           />
         )}
@@ -432,7 +437,6 @@ const TripRequest = () => {
 };
 
 // Reusable Components
-
 const SelectField = ({ label, value, onChange, options }) => (
   <div>
     {label && (
@@ -533,87 +537,117 @@ const TextAreaField = ({ label, value, onChange, placeholder }) => (
 );
 
 const DestinationModal = ({
-  tempDestination,
-  setTempDestination,
-  locations,
-  updateLocation,
+  tempDestinations,
+  setTempDestinations,
+  customLocations,
+  handleCustomLocationChange,
+  handleAddCustomLocation,
+  handleDeleteCustomLocation,
   additionalOptions,
   setAdditionalOptions,
-  customLocation,
-  setCustomLocation,
   onClose,
 }) => {
-  const selectedDestinationData = tempDestination
-    ? destinationData[tempDestination]
-    : null;
+  const handleDestinationToggle = (destination) => {
+    setTempDestinations((prev) =>
+      prev.includes(destination)
+        ? prev.filter((d) => d !== destination)
+        : [...prev, destination]
+    );
+  };
+
+  // Handler for overlay click
+  const handleOverlayClick = (e) => {
+    // Check if the click target is the overlay itself (not its children)
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={handleOverlayClick}>
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-lg font-semibold text-[#2E4A47] mb-4">
-          Destination
+          Select Destinations
         </h2>
 
-        <SelectField
-          value={tempDestination}
-          onChange={(e) => setTempDestination(e.target.value)}
-          options={[
-            { value: "", label: "Select Your Desired Country" },
-            { value: "france", label: "France" },
-            { value: "italy", label: "Italy" },
-            { value: "japan", label: "Japan" },
-            { value: "usa", label: "USA" },
-          ]}
-        />
-
-        {selectedDestinationData && (
-          <>
-            {locations.map((location, index) => (
-              <SelectField
-                key={index}
-                value={location}
-                onChange={(e) => updateLocation(index, e.target.value)}
-                options={[
-                  { value: "", label: "Select a location" },
-                  ...selectedDestinationData.locations,
-                ]}
+        <div className="space-y-2 mb-4">
+          {Object.keys(destinationData).map((country) => (
+            <label key={country} className="flex items-center">
+              <input
+                type="checkbox"
+                checked={tempDestinations.includes(country)}
+                onChange={() => handleDestinationToggle(country)}
+                className="mr-2 text-[#2E4A47] focus:ring-[#2E4A47]"
               />
+              {country.charAt(0).toUpperCase() + country.slice(1)}
+            </label>
+          ))}
+        </div>
+
+        {tempDestinations.map((dest) => (
+          <div key={dest} className="mb-4">
+            <h3 className="text-md font-medium text-[#2E4A47]">
+              {dest} Additional Options
+            </h3>
+            {destinationData[dest].additionalOptions.map((option) => (
+              <label key={option.key} className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={additionalOptions[`${dest}_${option.key}`] || false}
+                  onChange={(e) =>
+                    setAdditionalOptions({
+                      ...additionalOptions,
+                      [`${dest}_${option.key}`]: e.target.checked,
+                    })
+                  }
+                  className="mr-2 text-[#2E4A47] focus:ring-[#2E4A47]"
+                />
+                {option.label}
+              </label>
             ))}
+          </div>
+        ))}
 
-            <div className="space-y-2 mb-4">
-              {selectedDestinationData.additionalOptions.map((option) => (
-                <label key={option.key} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={additionalOptions[option.key] || false}
-                    onChange={(e) =>
-                      setAdditionalOptions({
-                        ...additionalOptions,
-                        [option.key]: e.target.checked,
-                      })
-                    }
-                    className="mr-2 text-[#2E4A47] focus:ring-[#2E4A47]"
-                  />
-                  {option.label}
-                </label>
-              ))}
+        <div className="mb-4">
+          <h3 className="text-md font-medium text-[#2E4A47] mb-2">
+            Custom Locations
+          </h3>
+          {customLocations.map((location, index) => (
+            <div key={index} className="flex items-center gap-2 mb-2">
+              <input
+                type="text"
+                value={location}
+                onChange={(e) =>
+                  handleCustomLocationChange(index, e.target.value)
+                }
+                placeholder={`Custom Location ${index + 1}`}
+                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47]"
+              />
+              {customLocations.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteCustomLocation(index)}
+                  className="text-red-500 hover:text-red-700">
+                  Delete
+                </button>
+              )}
             </div>
-          </>
-        )}
-
-        <input
-          type="text"
-          value={customLocation}
-          onChange={(e) => setCustomLocation(e.target.value)}
-          placeholder="Add your custom location"
-          className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] mb-4"
-        />
+          ))}
+          <button
+            type="button"
+            onClick={handleAddCustomLocation}
+            className="text-[#2E4A47] hover:underline">
+            + Add Another Location
+          </button>
+        </div>
 
         <div className="flex justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
-            Close
+            Save & Close
           </button>
         </div>
       </div>

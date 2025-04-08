@@ -1,9 +1,9 @@
 /** @format */
 
-// src/context/TripRequestContext.js
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { useUser } from "./UserContext";
+import { db } from "../../firebase.config";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 // Create the TripRequestContext
 const TripRequestContext = createContext();
@@ -12,26 +12,46 @@ const TripRequestContext = createContext();
 export const TripRequestProvider = ({ children }) => {
   const { user } = useUser();
 
-  // Trip state
+  // Trip state with nested structure
   const [trip, setTrip] = useState({
-    user: user ? { email: user.email, uid: user.uid } : null,
-    startDate: "",
-    endDate: "",
-    travelType: "Solo",
-    maleCount: 0,
-    femaleCount: 0,
-    kidsCount: 0,
-    destination: "",
-    accommodation: "No",
-    transportation: "No",
-    foodPreference: "No",
-    interests: "",
-    remarks: "",
-    termsAgreed: false,
+    userData: {
+      user: user ? { email: user.email, uid: user.uid } : null,
+      role: user ? user.role : "",
+      tripDetails: {
+        startDate: "",
+        endDate: "",
+        destination: "",
+        travelType: "",
+        maleCount: 0,
+        femaleCount: 0,
+        kidsCount: 0,
+        accommodation: "No",
+        accommodationDetails: {
+          type: "Hotel",
+          starRating: "5 Star",
+        },
+        transportation: "No",
+        transportationDetails: {
+          type: "Car",
+          customMethod: "",
+        },
+        foodPreference: "No",
+        foodPreferenceDetails: {
+          preference: "Halal Food, Vegetarian, Meat",
+        },
+        interests: "",
+        remarks: "",
+        termsAgreed: false,
+        additionalOptions: {},
+        locations: [],
+      },
+    },
+    createdAt: null,
+    status: "pending",
   });
 
   // Sidebar state
-  const [locations, setLocations] = useState(["Dhaka"]);
+  const [locations, setLocations] = useState([]);
   const [accommodationType, setAccommodationType] = useState("Hotel");
   const [transportationType, setTransportationType] = useState("Car");
   const [foodPrefs, setFoodPrefs] = useState("Halal Food, Vegetarian, Meat");
@@ -46,23 +66,102 @@ export const TripRequestProvider = ({ children }) => {
     const updatedLocations = [...locations];
     updatedLocations[index] = value;
     setLocations(updatedLocations);
+    setTrip((prev) => ({
+      ...prev,
+      userData: {
+        ...prev.userData,
+        tripDetails: {
+          ...prev.userData.tripDetails,
+          locations: updatedLocations,
+        },
+      },
+    }));
   };
 
-  // Save trip state to localStorage whenever it changes
+  // Save to Firestore
+  const saveToFirestore = async (tripData) => {
+    if (!user) return;
+
+    try {
+      const tripWithMetadata = {
+        ...tripData,
+        userData: {
+          ...tripData.userData,
+          user: {
+            email: user.email,
+            uid: user.uid,
+          },
+        },
+        createdAt: new Date().toISOString(),
+        status: "pending",
+      };
+
+      const tripRef = doc(db, "tripRequests", user.uid);
+      const docSnap = await getDoc(tripRef);
+
+      if (docSnap.exists()) {
+        await setDoc(tripRef, tripWithMetadata, { merge: true });
+      } else {
+        await setDoc(tripRef, tripWithMetadata);
+      }
+
+      console.log("Trip saved successfully to Firestore");
+      return tripRef.id;
+    } catch (error) {
+      console.error("Error saving trip to Firestore:", error);
+      throw error;
+    }
+  };
+
+  // Load from Firestore when user logs in
+  useEffect(() => {
+    const loadTripData = async () => {
+      if (!user) return;
+
+      try {
+        const tripRef = doc(db, "tripRequests", user.uid);
+        const docSnap = await getDoc(tripRef);
+
+        if (docSnap.exists()) {
+          setTrip((prev) => ({
+            ...prev,
+            ...docSnap.data(),
+          }));
+          if (docSnap.data().userData?.tripDetails?.locations) {
+            setLocations(docSnap.data().userData.tripDetails.locations);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading trip data:", error);
+      }
+    };
+
+    loadTripData();
+  }, [user]);
+
+  // Save to localStorage and Firestore when trip changes
   useEffect(() => {
     if (user) {
       localStorage.setItem(`trip_${user.email}`, JSON.stringify(trip));
+      saveToFirestore(trip);
     }
   }, [trip, user]);
 
   // Function to handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!trip.termsAgreed) {
+    if (!trip.userData.tripDetails.termsAgreed) {
       alert("Please agree to the terms and conditions.");
       return;
     }
-    console.log("Form submitted:", trip);
+
+    try {
+      const tripId = await saveToFirestore(trip);
+      console.log("Trip submitted successfully with ID:", tripId);
+    } catch (error) {
+      console.error("Error submitting trip:", error);
+      alert("Failed to submit trip request. Please try again.");
+    }
   };
 
   // Context value

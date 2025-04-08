@@ -126,13 +126,15 @@ function Dashboard() {
                   <span className="font-normal">{dbUser.phoneNumber}</span>
                 </p>
 
+                {user.role === "Traveler" && (
+                  <button
+                    onClick={() => navigate("/trip-request")}
+                    className="bg-[#9DAE11] text-white py-2 px-4 rounded-md font-medium hover:bg-[#8C9A0F] transition-colors flex items-center">
+                    <span className="material-icons mr-2">add</span>
+                    Trip Request
+                  </button>
+                )}
                 {/* Trip Request Button */}
-                <button
-                  onClick={() => navigate("/trip-request")}
-                  className="bg-[#9DAE11] text-white py-2 px-4 rounded-md font-medium hover:bg-[#8C9A0F] transition-colors flex items-center">
-                  <span className="material-icons mr-2">add</span>
-                  Trip Request
-                </button>
               </div>
             )}
           </div>
@@ -147,198 +149,207 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Tabs Section */}
-        <div className="mt-8">
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab("Overview")}
-              className={`py-2 px-4 font-medium ${
-                activeTab === "Overview"
-                  ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
-                  : "text-gray-500"
-              }`}>
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("RecentTrips")}
-              className={`py-2 px-4 font-medium ${
-                activeTab === "RecentTrips"
-                  ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
-                  : "text-gray-500"
-              }`}>
-              Recent Trips
-            </button>
-            <button
-              onClick={() => setActiveTab("UpcomingBookings")}
-              className={`py-2 px-4 font-medium ${
-                activeTab === "UpcomingBookings"
-                  ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
-                  : "text-gray-500"
-              }`}>
-              Upcoming Bookings
-            </button>
-          </div>
+        {user.role === "Traveler" && (
+          <div className="mt-8">
+            <div className="flex border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab("Overview")}
+                className={`py-2 px-4 font-medium ${
+                  activeTab === "Overview"
+                    ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
+                    : "text-gray-500"
+                }`}>
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("RecentTrips")}
+                className={`py-2 px-4 font-medium ${
+                  activeTab === "RecentTrips"
+                    ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
+                    : "text-gray-500"
+                }`}>
+                Recent Trips
+              </button>
+              <button
+                onClick={() => setActiveTab("UpcomingBookings")}
+                className={`py-2 px-4 font-medium ${
+                  activeTab === "UpcomingBookings"
+                    ? "border-b-2 border-[#9DAE11] text-[#2E4A47]"
+                    : "text-gray-500"
+                }`}>
+                Upcoming Bookings
+              </button>
+            </div>
 
-          {/* Tab Content */}
-          <div className="mt-6">
-            {activeTab === "Overview" && (
-              <div>
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-[#2E4A47] font-semibold">
-                      Total Trips
-                    </h3>
-                    <p className="text-2xl font-bold text-[#9DAE11]">
-                      {stats.totalTrips}
-                    </p>
+            {/* Tab Content */}
+            <div className="mt-6">
+              {activeTab === "Overview" && (
+                <div>
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-white p-4 rounded-lg shadow-md">
+                      <h3 className="text-[#2E4A47] font-semibold">
+                        Total Trips
+                      </h3>
+                      <p className="text-2xl font-bold text-[#9DAE11]">
+                        {stats.totalTrips}
+                      </p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-md">
+                      <h3 className="text-[#2E4A47] font-semibold">
+                        Total Spent
+                      </h3>
+                      <p className="text-2xl font-bold text-[#9DAE11]">
+                        {stats.totalSpent}
+                      </p>
+                    </div>
+                    <div className="bg-white p-4 rounded-lg shadow-md">
+                      <h3 className="text-[#2E4A47] font-semibold">
+                        Favorite Destination
+                      </h3>
+                      <p className="text-2xl font-bold text-[#9DAE11]">
+                        {stats.favoriteDestination}
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-[#2E4A47] font-semibold">
-                      Total Spent
+
+                  {/* Graph: Trips Per Month */}
+                  <div className="bg-white p-6 rounded-lg shadow-md">
+                    <h3 className="text-[#2E4A47] font-semibold mb-4">
+                      Trips Per Month
                     </h3>
-                    <p className="text-2xl font-bold text-[#9DAE11]">
-                      {stats.totalSpent}
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-lg shadow-md">
-                    <h3 className="text-[#2E4A47] font-semibold">
-                      Favorite Destination
-                    </h3>
-                    <p className="text-2xl font-bold text-[#9DAE11]">
-                      {stats.favoriteDestination}
-                    </p>
+                    <div className="h-64">
+                      <Bar
+                        data={graphData}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              title: {
+                                display: true,
+                                text: "Number of Trips",
+                              },
+                            },
+                            x: {
+                              title: {
+                                display: true,
+                                text: "Month",
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* Graph: Trips Per Month */}
+              {activeTab === "RecentTrips" && (
                 <div className="bg-white p-6 rounded-lg shadow-md">
                   <h3 className="text-[#2E4A47] font-semibold mb-4">
-                    Trips Per Month
+                    Recent Trips
                   </h3>
-                  <div className="h-64">
-                    <Bar
-                      data={graphData}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            title: {
-                              display: true,
-                              text: "Number of Trips",
-                            },
-                          },
-                          x: {
-                            title: {
-                              display: true,
-                              text: "Month",
-                            },
-                          },
-                        },
-                      }}
-                    />
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Destination
+                          </th>
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Date
+                          </th>
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {recentTrips.map((trip) => (
+                          <tr key={trip.id} className="border-b">
+                            <td className="py-2 px-4 text-[#2E4A47]">
+                              {trip.destination}
+                            </td>
+                            <td className="py-2 px-4 text-[#2E4A47]">
+                              {trip.date}
+                            </td>
+                            <td className="py-2 px-4">
+                              <span
+                                className={`inline-block py-1 px-3 rounded-full text-sm ${
+                                  trip.status === "Completed"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                                }`}>
+                                {trip.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {activeTab === "RecentTrips" && (
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-[#2E4A47] font-semibold mb-4">
-                  Recent Trips
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Destination
-                        </th>
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Date
-                        </th>
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentTrips.map((trip) => (
-                        <tr key={trip.id} className="border-b">
-                          <td className="py-2 px-4 text-[#2E4A47]">
-                            {trip.destination}
-                          </td>
-                          <td className="py-2 px-4 text-[#2E4A47]">
-                            {trip.date}
-                          </td>
-                          <td className="py-2 px-4">
-                            <span
-                              className={`inline-block py-1 px-3 rounded-full text-sm ${
-                                trip.status === "Completed"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}>
-                              {trip.status}
-                            </span>
-                          </td>
+              {activeTab === "UpcomingBookings" && (
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <h3 className="text-[#2E4A47] font-semibold mb-4">
+                    Upcoming Bookings
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Destination
+                          </th>
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Date
+                          </th>
+                          <th className="py-2 px-4 text-[#2E4A47] font-semibold">
+                            Status
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {upcomingBookings.map((booking) => (
+                          <tr key={booking.id} className="border-b">
+                            <td className="py-2 px-4 text-[#2E4A47]">
+                              {booking.destination}
+                            </td>
+                            <td className="py-2 px-4 text-[#2E4A47]">
+                              {booking.date}
+                            </td>
+                            <td className="py-2 px-4">
+                              <span
+                                className={`inline-block py-1 px-3 rounded-full text-sm ${
+                                  booking.status === "Confirmed"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-yellow-100 text-yellow-700"
+                                }`}>
+                                {booking.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {activeTab === "UpcomingBookings" && (
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-[#2E4A47] font-semibold mb-4">
-                  Upcoming Bookings
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Destination
-                        </th>
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Date
-                        </th>
-                        <th className="py-2 px-4 text-[#2E4A47] font-semibold">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {upcomingBookings.map((booking) => (
-                        <tr key={booking.id} className="border-b">
-                          <td className="py-2 px-4 text-[#2E4A47]">
-                            {booking.destination}
-                          </td>
-                          <td className="py-2 px-4 text-[#2E4A47]">
-                            {booking.date}
-                          </td>
-                          <td className="py-2 px-4">
-                            <span
-                              className={`inline-block py-1 px-3 rounded-full text-sm ${
-                                booking.status === "Confirmed"
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-yellow-100 text-yellow-700"
-                              }`}>
-                              {booking.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {user.role === "Agency" && (
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-[#2E4A47] font-semibold mb-4">
+              Agency Dashboard
+            </h3>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
