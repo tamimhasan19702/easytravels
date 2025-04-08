@@ -12,10 +12,15 @@ import Signup from "./pages/Auth/Signup";
 import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard/dashboard";
 import TripRequest from "./pages/TripReq/TripRequest";
-import { TripRequestProvider } from "./context/TripRequestContext";
+import {
+  TripRequestProvider,
+  useTripRequest,
+} from "./context/TripRequestContext";
+import FinalTripRequest from "./pages/TripReq/FinalTripRequest";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
+  const { trip } = useTripRequest;
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);
@@ -47,6 +52,7 @@ const App = () => {
                   <Route path="trips" element={<div>Bookings Page</div>} />
                   <Route path="profile" element={<div>Profile Page</div>} />
                   <Route path="settings" element={<div>Settings Page</div>} />
+                  <Route path="final-tripreq" element={<FinalTripRequest />} />
                 </Route>
               </Routes>
             </ReactLenis>

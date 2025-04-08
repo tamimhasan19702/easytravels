@@ -1,6 +1,58 @@
 /** @format */
 
 import { destinationData } from "@/constant/destinationData";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import PropTypes from "prop-types";
+
+// Reusable Components
+export const DateRangePicker = ({ startDate, endDate, updateTripField }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        Start Date
+      </label>
+      <DatePicker
+        selected={startDate ? new Date(startDate) : null}
+        onChange={(date) =>
+          updateTripField(
+            "startDate",
+            date ? date.toISOString().split("T")[0] : ""
+          )
+        }
+        dateFormat="yyyy-MM-dd"
+        placeholderText="Select Start Date"
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47]"
+        minDate={new Date()}
+        maxDate={endDate ? new Date(endDate) : null}
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        End Date
+      </label>
+      <DatePicker
+        selected={endDate ? new Date(endDate) : null}
+        onChange={(date) =>
+          updateTripField(
+            "endDate",
+            date ? date.toISOString().split("T")[0] : ""
+          )
+        }
+        dateFormat="yyyy-MM-dd"
+        placeholderText="Select End Date"
+        className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47]"
+        minDate={startDate ? new Date(startDate) : new Date()}
+      />
+    </div>
+  </div>
+);
+
+DateRangePicker.propTypes = {
+  startDate: PropTypes.string,
+  endDate: PropTypes.string,
+  updateTripField: PropTypes.func.isRequired,
+};
 
 export const SelectField = ({ label, value, onChange, options }) => (
   <div>
@@ -21,6 +73,18 @@ export const SelectField = ({ label, value, onChange, options }) => (
     </select>
   </div>
 );
+
+SelectField.propTypes = {
+  label: PropTypes.string,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 
 export const RadioGroup = ({ label, name, value, onChange, options }) => (
   <div>
@@ -45,6 +109,14 @@ export const RadioGroup = ({ label, name, value, onChange, options }) => (
   </div>
 );
 
+RadioGroup.propTypes = {
+  label: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  options: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 export const CounterField = ({ label, value, onChange }) => (
   <div className="flex items-center justify-between">
     <label className="text-sm font-medium text-gray-700">{label}</label>
@@ -66,6 +138,12 @@ export const CounterField = ({ label, value, onChange }) => (
   </div>
 );
 
+CounterField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 export const GroupTravelFields = ({ trip, updateTripField }) => (
   <div className="space-y-4 mt-4">
     <CounterField
@@ -86,6 +164,15 @@ export const GroupTravelFields = ({ trip, updateTripField }) => (
   </div>
 );
 
+GroupTravelFields.propTypes = {
+  trip: PropTypes.shape({
+    maleCount: PropTypes.number.isRequired,
+    femaleCount: PropTypes.number.isRequired,
+    kidsCount: PropTypes.number.isRequired,
+  }).isRequired,
+  updateTripField: PropTypes.func.isRequired,
+};
+
 export const TextAreaField = ({ label, value, onChange, placeholder }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -100,6 +187,13 @@ export const TextAreaField = ({ label, value, onChange, placeholder }) => (
     />
   </div>
 );
+
+TextAreaField.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+  placeholder: PropTypes.string,
+};
 
 export const DestinationModal = ({
   tempDestinations,
@@ -120,9 +214,7 @@ export const DestinationModal = ({
     );
   };
 
-  // Handler for overlay click
   const handleOverlayClick = (e) => {
-    // Check if the click target is the overlay itself (not its children)
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -219,3 +311,17 @@ export const DestinationModal = ({
     </div>
   );
 };
+
+DestinationModal.propTypes = {
+  tempDestinations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  setTempDestinations: PropTypes.func.isRequired,
+  customLocations: PropTypes.arrayOf(PropTypes.string).isRequired,
+  handleCustomLocationChange: PropTypes.func.isRequired,
+  handleAddCustomLocation: PropTypes.func.isRequired,
+  handleDeleteCustomLocation: PropTypes.func.isRequired,
+  additionalOptions: PropTypes.object.isRequired,
+  setAdditionalOptions: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
+};
+
+export default DateRangePicker;

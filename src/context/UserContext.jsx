@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { signOut } from "firebase/auth"; // Import signOut from Firebase
 import { auth } from "../../firebase.config"; // Adjust path as needed
+import PropTypes from "prop-types";
 
 // Create the User Context
 const UserContext = createContext();
@@ -70,6 +71,10 @@ export const UserProvider = ({ children }) => {
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+};
+
+UserProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };
 
 export const useUser = () => {

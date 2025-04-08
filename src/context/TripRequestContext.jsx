@@ -1,9 +1,11 @@
 /** @format */
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import { useUser } from "./UserContext";
 import { db } from "../../firebase.config";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 // Create the TripRequestContext
 const TripRequestContext = createContext();
@@ -11,6 +13,7 @@ const TripRequestContext = createContext();
 // Create a provider component
 export const TripRequestProvider = ({ children }) => {
   const { user } = useUser();
+  const navigate = useNavigate();
 
   // Trip state with nested structure
   const [trip, setTrip] = useState({
@@ -20,7 +23,7 @@ export const TripRequestProvider = ({ children }) => {
       tripDetails: {
         startDate: "",
         endDate: "",
-        destination: "",
+        destinations: [], // Updated to array
         travelType: "",
         maleCount: 0,
         femaleCount: 0,
@@ -33,11 +36,11 @@ export const TripRequestProvider = ({ children }) => {
         transportation: "No",
         transportationDetails: {
           type: "Car",
-          customMethod: "",
+          methods: [], // Updated to array
         },
         foodPreference: "No",
         foodPreferenceDetails: {
-          preference: "Halal Food, Vegetarian, Meat",
+          preferences: [], // Updated to array
         },
         interests: "",
         remarks: "",
@@ -50,16 +53,8 @@ export const TripRequestProvider = ({ children }) => {
     status: "pending",
   });
 
-  // Sidebar state
+  // Sidebar state (not used in this case, but kept for consistency)
   const [locations, setLocations] = useState([]);
-  const [accommodationType, setAccommodationType] = useState("Hotel");
-  const [transportationType, setTransportationType] = useState("Car");
-  const [foodPrefs, setFoodPrefs] = useState("Halal Food, Vegetarian, Meat");
-
-  // Function to add a new location
-  const handleAddLocation = () => {
-    setLocations([...locations, ""]);
-  };
 
   // Function to update a specific location
   const updateLocation = (index, value) => {
@@ -78,7 +73,7 @@ export const TripRequestProvider = ({ children }) => {
     }));
   };
 
-  // Save to Firestore
+  // Save to Firestore (now only called from FinalTripRequest)
   const saveToFirestore = async (tripData) => {
     if (!user) return;
 
@@ -97,14 +92,7 @@ export const TripRequestProvider = ({ children }) => {
       };
 
       const tripRef = doc(db, "tripRequests", user.uid);
-      const docSnap = await getDoc(tripRef);
-
-      if (docSnap.exists()) {
-        await setDoc(tripRef, tripWithMetadata, { merge: true });
-      } else {
-        await setDoc(tripRef, tripWithMetadata);
-      }
-
+      await setDoc(tripRef, tripWithMetadata);
       console.log("Trip saved successfully to Firestore");
       return tripRef.id;
     } catch (error) {
@@ -113,55 +101,15 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
-  // Load from Firestore when user logs in
-  useEffect(() => {
-    const loadTripData = async () => {
-      if (!user) return;
-
-      try {
-        const tripRef = doc(db, "tripRequests", user.uid);
-        const docSnap = await getDoc(tripRef);
-
-        if (docSnap.exists()) {
-          setTrip((prev) => ({
-            ...prev,
-            ...docSnap.data(),
-          }));
-          if (docSnap.data().userData?.tripDetails?.locations) {
-            setLocations(docSnap.data().userData.tripDetails.locations);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading trip data:", error);
-      }
-    };
-
-    loadTripData();
-  }, [user]);
-
-  // Save to localStorage and Firestore when trip changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem(`trip_${user.email}`, JSON.stringify(trip));
-      saveToFirestore(trip);
-    }
-  }, [trip, user]);
-
-  // Function to handle form submission
-  const handleSubmit = async (e) => {
+  // Function to handle form submission (only updates state and redirects)
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!trip.userData.tripDetails.termsAgreed) {
       alert("Please agree to the terms and conditions.");
       return;
     }
-
-    try {
-      const tripId = await saveToFirestore(trip);
-      console.log("Trip submitted successfully with ID:", tripId);
-    } catch (error) {
-      console.error("Error submitting trip:", error);
-      alert("Failed to submit trip request. Please try again.");
-    }
+    // No Firestore save here, just redirect
+    navigate("/final-tripreq");
   };
 
   // Context value
@@ -170,15 +118,9 @@ export const TripRequestProvider = ({ children }) => {
     setTrip,
     locations,
     setLocations,
-    accommodationType,
-    setAccommodationType,
-    transportationType,
-    setTransportationType,
-    foodPrefs,
-    setFoodPrefs,
-    handleAddLocation,
     updateLocation,
     handleSubmit,
+    saveToFirestore, // Expose this for FinalTripRequest
   };
 
   return (
@@ -186,6 +128,10 @@ export const TripRequestProvider = ({ children }) => {
       {children}
     </TripRequestContext.Provider>
   );
+};
+
+TripRequestProvider.propTypes = {
+  children: PropTypes.node.isRequired, // Changed to node to be more permissive
 };
 
 // Custom hook to use the TripRequestContext
