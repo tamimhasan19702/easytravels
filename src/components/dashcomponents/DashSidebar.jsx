@@ -86,7 +86,7 @@ function DashSidebar() {
             </li>
             <li className="mb-4">
               <Link
-                to="/trips"
+                to="/my-trips"
                 className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
                 <span className="material-icons mr-2">luggage</span>
                 My Trips

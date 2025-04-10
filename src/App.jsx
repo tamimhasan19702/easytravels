@@ -17,6 +17,7 @@ import {
   useTripRequest,
 } from "./context/TripRequestContext";
 import FinalTripRequest from "./pages/TripReq/FinalTripRequest";
+import MyTrips from "./pages/MyTrips/MyTrips";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,7 @@ const App = () => {
                   <Route path="profile" element={<div>Profile Page</div>} />
                   <Route path="settings" element={<div>Settings Page</div>} />
                   <Route path="final-tripreq" element={<FinalTripRequest />} />
+                  <Route path="my-trips" element={<MyTrips />} />
                 </Route>
               </Routes>
             </ReactLenis>

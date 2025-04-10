@@ -10,117 +10,114 @@ import { useNavigate } from "react-router-dom";
 // Create the TripRequestContext
 const TripRequestContext = createContext();
 
-// Create a provider component
 export const TripRequestProvider = ({ children }) => {
   const { user } = useUser();
   const navigate = useNavigate();
 
-  // Trip state with nested structure
+  // Initialize trip state with user info and bids field
   const [trip, setTrip] = useState({
-    userData: {
-      user: user ? { email: user.email, uid: user.uid } : null,
-      role: user ? user.role : "",
-      tripDetails: {
-        startDate: "",
-        endDate: "",
-        destinations: [], // Updated to array
-        travelType: "",
-        maleCount: 0,
-        femaleCount: 0,
-        kidsCount: 0,
-        accommodation: "No",
-        accommodationDetails: {
-          type: "Hotel",
-          starRating: "5 Star",
-        },
-        transportation: "No",
-        transportationDetails: {
-          type: "Car",
-          methods: [], // Updated to array
-        },
-        foodPreference: "No",
-        foodPreferenceDetails: {
-          preferences: [], // Updated to array
-        },
-        interests: "",
-        remarks: "",
-        termsAgreed: false,
-        additionalOptions: {},
-        locations: [],
-      },
+    userInfo: user
+      ? { email: user.email, uid: user.uid, role: user.role || "traveler" }
+      : null,
+    tripDetails: {
+      startDate: "",
+      endDate: "",
+      destinations: [],
+      travelType: "",
+      maleCount: 0,
+      femaleCount: 0,
+      kidsCount: 0,
+      accommodation: "No",
+      accommodationDetails: { type: "Hotel", starRating: "5 Star" },
+      transportation: "No",
+      transportationDetails: { type: "Car", methods: [] },
+      foodPreference: "No",
+      foodPreferenceDetails: { preferences: [] },
+      interests: "",
+      remarks: "",
+      termsAgreed: false,
+      additionalOptions: {},
+      locations: [],
     },
     createdAt: null,
     status: "pending",
+    bids: [], // Array to store multiple agent bids
   });
 
-  // Sidebar state (not used in this case, but kept for consistency)
-  const [locations, setLocations] = useState([]);
-
-  // Function to update a specific location
-  const updateLocation = (index, value) => {
-    const updatedLocations = [...locations];
-    updatedLocations[index] = value;
-    setLocations(updatedLocations);
-    setTrip((prev) => ({
-      ...prev,
-      userData: {
-        ...prev.userData,
-        tripDetails: {
-          ...prev.userData.tripDetails,
-          locations: updatedLocations,
-        },
-      },
-    }));
-  };
-
-  // Save to Firestore (now only called from FinalTripRequest)
+  // Save to Firestore (called only from FinalTripRequest)
   const saveToFirestore = async (tripData) => {
-    if (!user) return;
+    if (!user || !tripData.userInfo?.uid) {
+      throw new Error("User not authenticated.");
+    }
 
     try {
       const tripWithMetadata = {
         ...tripData,
-        userData: {
-          ...tripData.userData,
-          user: {
-            email: user.email,
-            uid: user.uid,
-          },
-        },
-        createdAt: new Date().toISOString(),
-        status: "pending",
+        createdAt: tripData.createdAt || new Date().toISOString(),
+        status: tripData.status || "pending",
+        bids: tripData.bids || [], // Ensure bids array is included
       };
 
-      const tripRef = doc(db, "tripRequests", user.uid);
-      await setDoc(tripRef, tripWithMetadata);
-      console.log("Trip saved successfully to Firestore");
-      return tripRef.id;
+      const tripRef = doc(db, "tripRequests", tripData.userInfo.uid);
+      await setDoc(tripRef, tripWithMetadata, { merge: true }); // Merge to preserve existing bids
+      console.log(
+        "Trip saved successfully to Firestore with ID:",
+        tripData.userInfo.uid
+      );
+      return tripData.userInfo.uid;
     } catch (error) {
       console.error("Error saving trip to Firestore:", error);
       throw error;
     }
   };
 
-  // Function to handle form submission (only updates state and redirects)
+  // Handle form submission (updates state and redirects to final review)
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!trip.userData.tripDetails.termsAgreed) {
+    if (!trip.tripDetails.termsAgreed) {
       alert("Please agree to the terms and conditions.");
       return;
     }
-    // No Firestore save here, just redirect
     navigate("/final-tripreq");
+  };
+
+  // Function to add a bid (for agents, typically called from an agent-facing component)
+  const addBid = async (tripId, agentBid) => {
+    if (!user || user.role !== "agent") {
+      throw new Error("Only agents can submit bids.");
+    }
+
+    const newBid = {
+      agentId: user.uid,
+      agentEmail: user.email,
+      bidAmount: agentBid.bidAmount,
+      bidTimestamp: new Date().toISOString(),
+      message: agentBid.message || "",
+    };
+
+    try {
+      const tripRef = doc(db, "tripRequests", tripId);
+      const updatedTrip = {
+        ...trip,
+        bids: [...trip.bids, newBid],
+      };
+      await setDoc(tripRef, updatedTrip, { merge: true });
+      setTrip(updatedTrip); // Update local state
+      console.log("Bid added successfully by agent:", user.uid);
+      return newBid;
+    } catch (error) {
+      console.error("Error adding bid to Firestore:", error);
+      throw error;
+    }
   };
 
   // Context value
   const value = {
     trip,
     setTrip,
-    locations,
-    setLocations,
-    updateLocation,
     handleSubmit,
-    saveToFirestore, // Expose this for FinalTripRequest
+    saveToFirestore,
+    addBid, // Expose addBid for agent functionality
   };
 
   return (
@@ -131,10 +128,9 @@ export const TripRequestProvider = ({ children }) => {
 };
 
 TripRequestProvider.propTypes = {
-  children: PropTypes.node.isRequired, // Changed to node to be more permissive
+  children: PropTypes.node.isRequired,
 };
 
-// Custom hook to use the TripRequestContext
 export const useTripRequest = () => {
   const context = useContext(TripRequestContext);
   if (!context) {

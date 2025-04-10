@@ -12,7 +12,6 @@ import Preloader from "@/components/Preloader";
 import {
   SelectField,
   TextAreaField,
-  CounterField,
   RadioGroup,
   DestinationModal,
   DateRangePicker,
@@ -22,6 +21,7 @@ import {
 const TripRequest = () => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const { trip, setTrip, handleSubmit } = useTripRequest();
   const [dbUser, setDbUser] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,13 +32,11 @@ const TripRequest = () => {
   const [transportationMethods, setTransportationMethods] = useState([""]);
   const [foodPreferences, setFoodPreferences] = useState([""]);
 
-  const { trip, setTrip, handleSubmit } = useTripRequest();
-
-  // Fetch user data from Firestore
+  // Fetch user data from Firestore and sync with context
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.email) {
-        setError("User not authenticated or email not available.");
+        setError("User not authenticated.");
         setIsLoading(false);
         navigate("/");
         return;
@@ -56,7 +54,16 @@ const TripRequest = () => {
           return;
         }
 
-        setDbUser(querySnapshot.docs[0].data());
+        const userData = querySnapshot.docs[0].data();
+        setDbUser(userData);
+        setTrip((prev) => ({
+          ...prev,
+          userInfo: {
+            email: user.email,
+            uid: user.uid,
+            role: userData.role || "traveler",
+          },
+        }));
       } catch (err) {
         console.error("Error fetching user data:", err);
         setError("Failed to fetch user data.");
@@ -66,89 +73,72 @@ const TripRequest = () => {
     };
 
     fetchUserData();
-  }, [user, navigate]);
+  }, [user, navigate, setTrip]);
 
-  // Helper functions
+  // Update trip field helper
   const updateTripField = (field, value) => {
     setTrip((prev) => ({
       ...prev,
-      userData: {
-        ...prev.userData,
-        tripDetails: {
-          ...prev.userData.tripDetails,
-          [field]: value,
-        },
-      },
+      tripDetails: { ...prev.tripDetails, [field]: value },
     }));
   };
 
-  const handleAddCustomLocation = () => {
+  // Custom location handlers
+  const handleAddCustomLocation = () =>
     setCustomLocations([...customLocations, ""]);
-  };
-
   const handleCustomLocationChange = (index, value) => {
-    const updatedLocations = [...customLocations];
-    updatedLocations[index] = value;
-    setCustomLocations(updatedLocations);
+    const updated = [...customLocations];
+    updated[index] = value;
+    setCustomLocations(updated);
   };
-
   const handleDeleteCustomLocation = (index) => {
     if (customLocations.length > 1) {
-      const updatedLocations = customLocations.filter((_, i) => i !== index);
-      setCustomLocations(updatedLocations);
+      setCustomLocations(customLocations.filter((_, i) => i !== index));
     }
   };
 
-  const handleAddTransportation = () => {
+  // Transportation handlers
+  const handleAddTransportation = () =>
     setTransportationMethods([...transportationMethods, ""]);
-  };
-
   const handleTransportationChange = (index, value) => {
-    const updatedMethods = [...transportationMethods];
-    updatedMethods[index] = value;
-    setTransportationMethods(updatedMethods);
+    const updated = [...transportationMethods];
+    updated[index] = value;
+    setTransportationMethods(updated);
     updateTripField("transportationDetails", {
-      ...trip.userData.tripDetails.transportationDetails,
-      methods: updatedMethods,
+      ...trip.tripDetails.transportationDetails,
+      methods: updated,
     });
   };
-
   const handleDeleteTransportation = (index) => {
     if (transportationMethods.length > 1) {
-      const updatedMethods = transportationMethods.filter(
-        (_, i) => i !== index
-      );
-      setTransportationMethods(updatedMethods);
+      const updated = transportationMethods.filter((_, i) => i !== index);
+      setTransportationMethods(updated);
       updateTripField("transportationDetails", {
-        ...trip.userData.tripDetails.transportationDetails,
-        methods: updatedMethods,
+        ...trip.tripDetails.transportationDetails,
+        methods: updated,
       });
     }
   };
 
-  const handleAddFoodPreference = () => {
+  // Food preference handlers
+  const handleAddFoodPreference = () =>
     setFoodPreferences([...foodPreferences, ""]);
-  };
-
   const handleFoodPreferenceChange = (index, value) => {
-    const updatedPrefs = [...foodPreferences];
-    updatedPrefs[index] = value;
-    setFoodPreferences(updatedPrefs);
-    updateTripField("foodPreferenceDetails", { preferences: updatedPrefs });
+    const updated = [...foodPreferences];
+    updated[index] = value;
+    setFoodPreferences(updated);
+    updateTripField("foodPreferenceDetails", { preferences: updated });
   };
-
   const handleDeleteFoodPreference = (index) => {
     if (foodPreferences.length > 1) {
-      const updatedPrefs = foodPreferences.filter((_, i) => i !== index);
-      setFoodPreferences(updatedPrefs);
-      updateTripField("foodPreferenceDetails", { preferences: updatedPrefs });
+      const updated = foodPreferences.filter((_, i) => i !== index);
+      setFoodPreferences(updated);
+      updateTripField("foodPreferenceDetails", { preferences: updated });
     }
   };
 
-  const handleSelectDestinations = () => {
-    setIsModalOpen(true);
-  };
-
+  // Modal handlers
+  const handleSelectDestinations = () => setIsModalOpen(true);
   const handleModalClose = () => {
     updateTripField("destinations", tempDestinations);
     updateTripField("additionalOptions", additionalOptions);
@@ -184,8 +174,8 @@ const TripRequest = () => {
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6 w-full">
           <DateRangePicker
-            startDate={trip.userData.tripDetails.startDate}
-            endDate={trip.userData.tripDetails.endDate}
+            startDate={trip.tripDetails.startDate}
+            endDate={trip.tripDetails.endDate}
             updateTripField={updateTripField}
           />
 
@@ -196,7 +186,7 @@ const TripRequest = () => {
             <button
               type="button"
               onClick={handleSelectDestinations}
-              className="w-full p-3 border rounded-lg bg-[#F5F6F5] text-left">
+              className="w-full p-3 border rounded-lg bg-[#F5F6F5] text-left text-gray-700">
               {tempDestinations.length > 0
                 ? tempDestinations.join(", ")
                 : "Select Destinations"}
@@ -206,37 +196,37 @@ const TripRequest = () => {
           <RadioGroup
             label="Travel Type"
             name="travelType"
-            value={trip.userData.tripDetails.travelType}
+            value={trip.tripDetails.travelType}
             onChange={(value) => updateTripField("travelType", value)}
             options={["Solo", "Group"]}
           />
 
-          {trip.userData.tripDetails.travelType === "Group" && (
+          {trip.tripDetails.travelType === "Group" && (
             <GroupTravelFields
-              trip={trip.userData.tripDetails}
+              trip={trip.tripDetails}
               updateTripField={updateTripField}
             />
           )}
 
           <RadioGroup
-            label="Want to handle the accommodation?"
+            label="Handle Accommodation?"
             name="accommodation"
-            value={trip.userData.tripDetails.accommodation}
+            value={trip.tripDetails.accommodation}
             onChange={(value) => updateTripField("accommodation", value)}
             options={["Yes", "No"]}
           />
 
-          {trip.userData.tripDetails.accommodation === "Yes" && (
+          {trip.tripDetails.accommodation === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
-                Choose your accommodation
+                Choose Accommodation
               </h3>
               <SelectField
                 label="Accommodation Type"
-                value={trip.userData.tripDetails.accommodationDetails.type}
+                value={trip.tripDetails.accommodationDetails.type}
                 onChange={(e) =>
                   updateTripField("accommodationDetails", {
-                    ...trip.userData.tripDetails.accommodationDetails,
+                    ...trip.tripDetails.accommodationDetails,
                     type: e.target.value,
                   })
                 }
@@ -249,12 +239,10 @@ const TripRequest = () => {
               />
               <SelectField
                 label="Star Rating"
-                value={
-                  trip.userData.tripDetails.accommodationDetails.starRating
-                }
+                value={trip.tripDetails.accommodationDetails.starRating}
                 onChange={(e) =>
                   updateTripField("accommodationDetails", {
-                    ...trip.userData.tripDetails.accommodationDetails,
+                    ...trip.tripDetails.accommodationDetails,
                     starRating: e.target.value,
                   })
                 }
@@ -270,24 +258,24 @@ const TripRequest = () => {
           )}
 
           <RadioGroup
-            label="Want to handle your transportation?"
+            label="Handle Transportation?"
             name="transportation"
-            value={trip.userData.tripDetails.transportation}
+            value={trip.tripDetails.transportation}
             onChange={(value) => updateTripField("transportation", value)}
             options={["Yes", "No"]}
           />
 
-          {trip.userData.tripDetails.transportation === "Yes" && (
+          {trip.tripDetails.transportation === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
-                Choose your transportation
+                Choose Transportation
               </h3>
               <SelectField
                 label="Primary Transportation Type"
-                value={trip.userData.tripDetails.transportationDetails.type}
+                value={trip.tripDetails.transportationDetails.type}
                 onChange={(e) =>
                   updateTripField("transportationDetails", {
-                    ...trip.userData.tripDetails.transportationDetails,
+                    ...trip.tripDetails.transportationDetails,
                     type: e.target.value,
                   })
                 }
@@ -323,23 +311,23 @@ const TripRequest = () => {
                 type="button"
                 onClick={handleAddTransportation}
                 className="mt-2 text-[#2E4A47] hover:underline">
-                + Add Another Transportation Method
+                + Add Another Method
               </button>
             </div>
           )}
 
           <RadioGroup
-            label="What’s your food preference?"
+            label="Food Preference?"
             name="foodPreference"
-            value={trip.userData.tripDetails.foodPreference}
+            value={trip.tripDetails.foodPreference}
             onChange={(value) => updateTripField("foodPreference", value)}
             options={["Yes", "No"]}
           />
 
-          {trip.userData.tripDetails.foodPreference === "Yes" && (
+          {trip.tripDetails.foodPreference === "Yes" && (
             <div className="border rounded-lg p-4 bg-white shadow-md">
               <h3 className="text-lg font-semibold text-[#2E4A47] mb-4">
-                Your food preferences
+                Food Preferences
               </h3>
               {foodPreferences.map((pref, index) => (
                 <div key={index} className="mt-2 flex items-center gap-2">
@@ -371,34 +359,34 @@ const TripRequest = () => {
                 type="button"
                 onClick={handleAddFoodPreference}
                 className="mt-2 text-[#2E4A47] hover:underline">
-                + Add Another Food Preference
+                + Add Another Preference
               </button>
             </div>
           )}
 
           <TextAreaField
-            label="Share your Interests & Activities"
-            value={trip.userData.tripDetails.interests}
+            label="Interests & Activities"
+            value={trip.tripDetails.interests}
             onChange={(e) => updateTripField("interests", e.target.value)}
             placeholder="What activities do you enjoy?"
           />
 
           <TextAreaField
             label="Remarks/Request"
-            value={trip.userData.tripDetails.remarks}
+            value={trip.tripDetails.remarks}
             onChange={(e) => updateTripField("remarks", e.target.value)}
-            placeholder="Do you have any special request in mind?"
+            placeholder="Any special requests?"
           />
 
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={trip.userData.tripDetails.termsAgreed}
+              checked={trip.tripDetails.termsAgreed}
               onChange={(e) => updateTripField("termsAgreed", e.target.checked)}
               className="text-[#2E4A47] focus:ring-[#2E4A47]"
             />
             <label className="text-sm text-gray-700">
-              By continuing, you agree with the{" "}
+              I agree to the{" "}
               <a href="#" className="text-[#2E4A47] underline">
                 Terms & Conditions
               </a>
@@ -408,8 +396,8 @@ const TripRequest = () => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-lg primary_btn transition duration-300">
-            CREATE YOUR TRAVEL PLAN
+            className="w-full py-3 rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300">
+            REVIEW YOUR TRAVEL PLAN
           </button>
         </form>
 
