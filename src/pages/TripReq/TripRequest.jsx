@@ -396,7 +396,7 @@ const TripRequest = () => {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300">
+            className="w-full py-3 primary_btn rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300">
             REVIEW YOUR TRAVEL PLAN
           </button>
         </form>
