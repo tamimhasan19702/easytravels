@@ -17,6 +17,9 @@ function MyTrips() {
   const [filteredTrips, setFilteredTrips] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterActivated, setFilterActivated] = useState(false);
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const tripsPerPage = 6; // Number of trips per page
 
   // Fetch all trips for logged-in user
   useEffect(() => {
@@ -31,8 +34,7 @@ function MyTrips() {
           ...doc.data(),
         }));
         setTrips(tripsData);
-        setFilteredTrips(tripsData); // show all initially
-        console.log(trip);
+        setFilteredTrips(tripsData); // Show all initially
       } catch (err) {
         console.log("Error fetching trips:", err);
       }
@@ -41,21 +43,41 @@ function MyTrips() {
     fetchTrips();
   }, [user]);
 
-  // Run filtering only when user types something
+  // Handle search by destination
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     setFilterActivated(true);
+    setCurrentPage(1); // Reset to first page on search
 
     if (value.trim() === "") {
       setFilterActivated(false);
       setFilteredTrips(trips);
     } else {
       const filtered = trips.filter((trip) =>
-        trip?.location?.toLowerCase().includes(value.toLowerCase())
+        trip?.tripDetails?.destinations
+          ?.join(", ")
+          .toLowerCase()
+          .includes(value.toLowerCase())
       );
       setFilteredTrips(filtered);
     }
+  };
+
+  // Pagination logic
+  const indexOfLastTrip = currentPage * tripsPerPage;
+  const indexOfFirstTrip = indexOfLastTrip - tripsPerPage;
+  const currentTrips = (filterActivated ? filteredTrips : trips).slice(
+    indexOfFirstTrip,
+    indexOfLastTrip
+  );
+  console.log(currentTrips);
+  const totalPages = Math.ceil(
+    (filterActivated ? filteredTrips : trips).length / tripsPerPage
+  );
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
@@ -65,7 +87,7 @@ function MyTrips() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl md:text-5xl font-bold text-[#2E4A47]">
-              Explore New Travel Requests
+              Explore Your Travel Requests
             </h1>
           </div>
           <img
@@ -84,21 +106,24 @@ function MyTrips() {
             onChange={handleSearchChange}
             className="w-full md:w-1/3 p-3 border rounded-lg"
           />
-          {/* Future Filters */}
           <select className="p-3 rounded-lg border w-full md:w-1/4">
             <option>Destination</option>
+            {/* Add destination options dynamically if needed */}
           </select>
           <select className="p-3 rounded-lg border w-full md:w-1/4">
             <option>Traveler's type</option>
+            <option>Solo</option>
+            <option>Family</option>
+            <option>Group</option>
           </select>
           <div className="flex gap-2">
             <button
               className="bg-[#FFB547] px-4 py-2 rounded-lg text-white"
               onClick={() => {
-                // Reset everything
                 setSearchTerm("");
                 setFilterActivated(false);
                 setFilteredTrips(trips);
+                setCurrentPage(1); // Reset to first page
               }}>
               Refresh
             </button>
@@ -110,8 +135,8 @@ function MyTrips() {
 
         {/* Trip Cards Grid */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {(filterActivated ? filteredTrips : trips).length > 0 ? (
-            (filterActivated ? filteredTrips : trips).map((trip) => (
+          {currentTrips.length > 0 ? (
+            currentTrips.map((trip) => (
               <TripCard
                 key={trip.id}
                 trip={trip}
@@ -123,21 +148,31 @@ function MyTrips() {
           )}
         </div>
 
-        {/* Pagination (UI only) */}
-        <div className="flex justify-center items-center gap-3 mt-10">
-          <button className="bg-[#FFB547] text-white px-3 py-1 rounded">
-            1
-          </button>
-          <button className="bg-white border border-[#FFB547] text-[#FFB547] px-3 py-1 rounded">
-            2
-          </button>
-          <button className="bg-white border border-[#FFB547] text-[#FFB547] px-3 py-1 rounded">
-            3
-          </button>
-          <button className="bg-black text-white px-5 py-2 rounded">
-            View more
-          </button>
-        </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-3 mt-10">
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  className={`px-3 py-1 rounded ${
+                    currentPage === page
+                      ? "bg-[#FFB547] text-white"
+                      : "bg-white border border-[#FFB547] text-[#FFB547]"
+                  }`}
+                  onClick={() => handlePageChange(page)}>
+                  {page}
+                </button>
+              )
+            )}
+            <button
+              className="bg-black text-white px-5 py-2 rounded"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}>
+              View more
+            </button>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
