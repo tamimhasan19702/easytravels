@@ -32,6 +32,7 @@ function MyTrips() {
         }));
         setTrips(tripsData);
         setFilteredTrips(tripsData); // show all initially
+        console.log(trip);
       } catch (err) {
         console.log("Error fetching trips:", err);
       }

@@ -96,15 +96,19 @@ function Login() {
   return (
     <>
       <Header />
-      <div className="container flex items-center justify-start h-screen">
+      <div className="container flex items-center justify-center h-screen max-md:flex-col">
         {/* Left Side: Title */}
-        <div className="w-1/2">
-          <h1 className="text-center">login</h1>
+        <div className="w-full max-lg:w-1/2 max-md:w-full">
+          <div className="w-full max-lg:w-1/2 max-md:w-full my-20">
+            <h1 className="text-center text-4xl max-lg:text-3xl max-md:text-2xl">
+              login
+            </h1>
+          </div>
         </div>
 
         {/* Right Side: Form */}
-        <div className="w-1/2">
-          <div className="bg-white p-8 rounded-lg shadow_1 w-full max-w-md">
+        <div className="w-full max-lg:w-1/2 max-md:w-full">
+          <div className="bg-white p-8 rounded-lg shadow_1 w-full max-w-md max-md:max-w-full">
             {/* Tabs */}
             <div className="flex mb-6">
               <button
@@ -149,7 +153,7 @@ function Login() {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray"
+                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray max-md:w-full"
                   {...register("email", { required: "Email is required" })}
                 />
                 {errors.email && (
@@ -164,7 +168,7 @@ function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
-                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray"
+                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray max-md:w-full"
                   {...register("password", {
                     required: "Password is required",
                   })}
