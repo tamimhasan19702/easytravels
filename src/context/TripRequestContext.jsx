@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import { useUser } from "./UserContext";
 import { db } from "../../firebase.config";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, addDoc, collection } from "firebase/firestore";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
@@ -46,28 +46,22 @@ export const TripRequestProvider = ({ children }) => {
 
   // Save to Firestore (called only from FinalTripRequest)
   const saveToFirestore = async (tripData) => {
-    if (!user || !tripData.userInfo?.uid) {
-      throw new Error("User not authenticated.");
-    }
-
     try {
-      const tripWithMetadata = {
+      // Ensure the trip data includes all necessary fields
+      const tripToSave = {
         ...tripData,
-        createdAt: tripData.createdAt || new Date().toISOString(),
-        status: tripData.status || "pending",
-        bids: tripData.bids || [], // Ensure bids array is included
+        createdAt: new Date().toISOString(), // Add server timestamp for creation time
+        status: "pending", // Ensure status is set
+        bids: tripData.bids || [], // Initialize bids as empty array if not provided
       };
 
-      const tripRef = doc(db, "tripRequests", tripData.userInfo.uid);
-      await setDoc(tripRef, tripWithMetadata, { merge: true }); // Merge to preserve existing bids
-      console.log(
-        "Trip saved successfully to Firestore with ID:",
-        tripData.userInfo.uid
-      );
-      return tripData.userInfo.uid;
+      // Create a new document in the "tripRequests" collection
+      const docRef = await addDoc(collection(db, "tripRequests"), tripToSave);
+      console.log("New trip request added with ID: ", docRef.id);
+      return docRef.id; // Return the new document ID if needed
     } catch (error) {
-      console.error("Error saving trip to Firestore:", error);
-      throw error;
+      console.error("Error adding trip request to Firestore: ", error);
+      throw error; // Re-throw the error to handle it in the component
     }
   };
 

@@ -1,53 +1,113 @@
 /** @format */
 
-import React from "react";
-import { FaMapMarkerAlt, FaCalendarAlt, FaUser } from "react-icons/fa";
+import {
+  FaUser,
+  FaMapMarkerAlt,
+  FaClock,
+  FaMoneyBillWave,
+} from "react-icons/fa";
+import { motion } from "framer-motion";
 
-const TripCard = ({ trip, onClick }) => {
-  return (
-    <div
-      className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-      onClick={onClick}>
-      {/* Destination & Date */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-semibold text-[#2E4A47]">
-          {trip?.location || "Unknown Destination"}
-        </h2>
-        <span className="text-sm text-gray-500 flex items-center gap-1">
-          <FaCalendarAlt />
-          {trip?.date || "N/A"}
-        </span>
-      </div>
-
-      {/* Traveler Info */}
-      <div className="flex items-center gap-2 text-gray-700 mb-2">
-        <FaUser className="text-[#FFB547]" />
-        <p className="text-sm">
-          {trip?.userInfo?.fullName || "Traveler"} &mdash;{" "}
-          {trip?.userInfo?.email || "N/A"}
-        </p>
-      </div>
-
-      {/* Additional Details */}
-      <div className="text-sm text-gray-600 mt-3">
-        <p>
-          <strong>Purpose:</strong> {trip?.purpose || "Not specified"}
-        </p>
-        <p>
-          <strong>Duration:</strong> {trip?.duration || "Unknown"}
-        </p>
-        <p>
-          <strong>Travel Type:</strong> {trip?.type || "N/A"}
-        </p>
-      </div>
-
-      {/* Marker Icon + City */}
-      <div className="mt-4 flex items-center gap-2 text-[#2E4A47] font-medium">
-        <FaMapMarkerAlt />
-        <span>{trip?.city || "City not specified"}</span>
-      </div>
-    </div>
-  );
+// Animation variants for bottom-to-top effect
+const cardVariants = {
+  hidden: {
+    y: 50,
+    opacity: 0,
+  },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut",
+    },
+  },
 };
+
+// Updated TripCard component with animation and modern style
+function TripCard({ trip, onClick }) {
+  const calculateTimeLeft = (createdAt) => {
+    const now = new Date();
+    const created = new Date(createdAt);
+    const diffMs = now - created;
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return `${diffHrs}:${diffMins.toString().padStart(2, "0")}:${diffSecs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Calculate total people, ensuring "Solo" shows as 1 person
+  const totalPeople =
+    trip.tripDetails.travelType === "Solo"
+      ? 1
+      : trip.tripDetails.maleCount +
+        trip.tripDetails.femaleCount +
+        trip.tripDetails.kidsCount;
+
+  return (
+    <motion.div
+      className="bg-white border border-gray-100 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col gap-4 w-full"
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible">
+      {/* Travel Type and Location */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <FaUser className="text-indigo-600 flex-shrink-0" />
+          <span className="text-gray-700 font-medium truncate">
+            <strong>Travel Type:</strong> {trip.tripDetails.travelType} (
+            {totalPeople} {totalPeople === 1 ? "person" : "people"})
+          </span>
+        </div>
+        <div className="flex items-center gap-3 overflow-hidden">
+          <FaMapMarkerAlt className="text-indigo-600 flex-shrink-0" />
+          <span className="text-gray-700 font-medium truncate">
+            {trip.tripDetails.destinations.join(", ")}
+          </span>
+        </div>
+      </div>
+
+      {/* Dates */}
+      <div className="text-gray-700 font-medium truncate">
+        <strong>Dates:</strong> {trip.tripDetails.startDate} to{" "}
+        {trip.tripDetails.endDate}
+      </div>
+
+      {/* Username and Email */}
+      <div className="text-gray-700 font-medium truncate">
+        <strong>Username:</strong> {trip.userInfo.email.split("@")[0]}
+      </div>
+      <div className="text-gray-700 font-medium truncate">
+        <strong>Email:</strong> {trip.userInfo.email}
+      </div>
+
+      {/* Time Left and Bid Status */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-3">
+        <motion.button
+          className="bg-indigo-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto hover:bg-indigo-700 transition-colors duration-200"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onClick}>
+          <span className="text-lg">+</span> View Details
+        </motion.button>
+        <div className="flex items-center gap-3 overflow-hidden">
+          <FaClock className="text-indigo-600 flex-shrink-0" />
+          <span className="text-gray-700 font-medium truncate">
+            Time Left: {calculateTimeLeft(trip.createdAt)}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 overflow-hidden">
+          <FaMoneyBillWave className="text-indigo-600 flex-shrink-0" />
+          <span className="text-gray-700 font-medium truncate">
+            Bid Status:{" "}
+            {trip.bids.length > 0 ? `${trip.bids.length} Bids` : "No Bids Yet"}
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export default TripCard;

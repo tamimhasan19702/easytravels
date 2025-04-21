@@ -7,7 +7,10 @@ import Header from "../../components/Header";
 import { auth, db } from "../../../firebase.config";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { useUser } from "../../context/UserContext"; // Import the custom hook
+import { useUser } from "../../context/UserContext";
+import { motion } from "framer-motion";
+import Lottie from "lottie-react";
+import Signin from "../../assets/login02.json";
 
 function Login() {
   const [activeTab, setActiveTab] = useState("Traveler");
@@ -96,131 +99,139 @@ function Login() {
   return (
     <>
       <Header />
-      <div className="container flex items-center justify-center h-screen max-md:flex-col">
-        {/* Left Side: Title */}
-        <div className="w-full max-lg:w-1/2 max-md:w-full">
-          <div className="w-full max-lg:w-1/2 max-md:w-full my-20">
-            <h1 className="text-center text-4xl max-lg:text-3xl max-md:text-2xl">
-              login
-            </h1>
-          </div>
-        </div>
-
-        {/* Right Side: Form */}
-        <div className="w-full max-lg:w-1/2 max-md:w-full">
-          <div className="bg-white p-8 rounded-lg shadow_1 w-full max-w-md max-md:max-w-full">
-            {/* Tabs */}
-            <div className="flex mb-6">
-              <button
-                onClick={() => handleTabChange("Traveler")}
-                className={`flex-1 py-3 text-center rounded-l-lg font-medium ${
-                  activeTab === "Traveler"
-                    ? "bg-[#9DAE11] text-white"
-                    : "bg-white text-light_gray"
-                }`}>
-                Traveler
-              </button>
-              <button
-                onClick={() => handleTabChange("Agency")}
-                className={`flex-1 py-3 text-center rounded-r-lg font-medium ${
-                  activeTab === "Agency"
-                    ? "bg-[#9DAE11] text-white"
-                    : "bg-white text-light_gray"
-                }`}>
-                Agency
-              </button>
+      <div className="container min-h-screen flex flex-col lg:flex-row items-center justify-center gap-10 px-4">
+        <div className="mt-[100px] lg:mt-[0px] flex flex-col lg:flex-row items-center justify-center gap-[100px] px-4">
+          {/* Left Side: Animation */}
+          <motion.div
+            initial={{ opacity: 0, x: -500 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="w-full lg:w-1/2 flex items-center justify-center">
+            <div className="w-full">
+              <Lottie animationData={Signin} loop={true} />
             </div>
+          </motion.div>
 
-            {/* Form Title */}
-            <h2 className="text-2xl font-bold text-center mb-6 dark_gray">
-              Sign in Form
-            </h2>
-
-            {/* Display Firebase Error */}
-            {firebaseError && (
-              <p className="text-red-500 text-sm text-center mb-4">
-                {firebaseError}
-              </p>
-            )}
-
-            {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)}>
-              {/* Hidden Role Input */}
-              <input type="hidden" {...register("role")} />
-
-              {/* Email Input */}
-              <div className="mb-4">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray max-md:w-full"
-                  {...register("email", { required: "Email is required" })}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message}
-                  </p>
-                )}
+          {/* Right Side: Form */}
+          <div className="w-full lg:w-1/2">
+            <motion.div
+              initial={{ opacity: 0, x: 500 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="bg-white p-8 rounded-lg shadow_1 w-full max-w-md mx-auto">
+              {/* Tabs */}
+              <div className="flex mb-6">
+                <button
+                  onClick={() => handleTabChange("Traveler")}
+                  className={`flex-1 py-3 text-center rounded-l-lg font-medium ${
+                    activeTab === "Traveler"
+                      ? "bg-[#9DAE11] text-white"
+                      : "bg-white text-light_gray"
+                  }`}>
+                  Traveler
+                </button>
+                <button
+                  onClick={() => handleTabChange("Agency")}
+                  className={`flex-1 py-3 text-center rounded-r-lg font-medium ${
+                    activeTab === "Agency"
+                      ? "bg-[#9DAE11] text-white"
+                      : "bg-white text-light_gray"
+                  }`}>
+                  Agency
+                </button>
               </div>
 
-              {/* Password Input */}
-              <div className="mb-4 relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray max-md:w-full"
-                  {...register("password", {
-                    required: "Password is required",
-                  })}
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 light_gray cursor-pointer material-icons">
-                  {showPassword ? "visibility_off" : "visibility"}
-                </span>
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password.message}
-                  </p>
-                )}
-              </div>
+              {/* Form Title */}
+              <h2 className="text-2xl font-bold text-center mb-6 dark_gray">
+                Sign in Form
+              </h2>
 
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center mb-6">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  className="mr-2 h-5 w-5"
-                  {...register("remember")}
-                />
-                <label htmlFor="remember" className="dark_gray">
-                  Remember me
-                </label>
-              </div>
+              {/* Firebase Error */}
+              {firebaseError && (
+                <p className="text-red-500 text-sm text-center mb-4">
+                  {firebaseError}
+                </p>
+              )}
 
-              {/* Sign In Button with Loader */}
-              <button
-                type="submit"
-                className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
-                disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <span className="loader mr-2"></span>
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
+              {/* Form */}
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <input type="hidden" {...register("role")} />
 
-              {/* Create New Account Link */}
-              <p className="text-center mt-4 light_gray">
-                Don’t have an account?{" "}
-                <Link to="/signup" className="text-[#9DAE11] hover:underline">
-                  Create a New Account
-                </Link>
-              </p>
-            </form>
+                <div className="mb-4">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray"
+                    {...register("email", { required: "Email is required" })}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mb-4 relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full p-3 bg_1 rounded-lg light_gray focus:outline-none focus:ring-2 focus:ring-gray"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                  />
+                  <span
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 light_gray cursor-pointer material-icons">
+                    {showPassword ? "visibility_off" : "visibility"}
+                  </span>
+                  {errors.password && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="remember"
+                      className="mr-2 h-5 w-5"
+                    />
+                    <label htmlFor="remember" className="dark_gray">
+                      Remember Me
+                    </label>
+                  </div>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[#9DAE11] text-sm hover:underline">
+                    Forgot Password?
+                  </Link>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full primary_btn !py-3 rounded-md flex items-center justify-center"
+                  disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <span className="loader mr-2"></span>
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign in"
+                  )}
+                </button>
+
+                <p className="text-center mt-4 light_gray">
+                  Don’t have an account?{" "}
+                  <Link to="/signup" className="text-[#9DAE11] hover:underline">
+                    Sign up here
+                  </Link>
+                </p>
+              </form>
+            </motion.div>
           </div>
         </div>
       </div>
