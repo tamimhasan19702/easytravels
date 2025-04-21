@@ -25,6 +25,7 @@ const TripRequest = () => {
   const [dbUser, setDbUser] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempDestinations, setTempDestinations] = useState([]);
   const [customLocations, setCustomLocations] = useState([""]);
@@ -149,6 +150,16 @@ const TripRequest = () => {
     setIsModalOpen(false);
   };
 
+  // Handle form submission with delay and redirect
+  const onSubmit = (e) => {
+    handleSubmit(e, async () => {
+      setIsSubmitting(true);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setIsSubmitting(false);
+      navigate("/final-tripreq");
+    });
+  };
+
   // Render states
   if (isLoading) return <Preloader />;
   if (error)
@@ -157,6 +168,8 @@ const TripRequest = () => {
     navigate("/");
     return null;
   }
+
+  if (isSubmitting) return <Preloader />;
 
   return (
     <DashboardLayout>
@@ -172,12 +185,25 @@ const TripRequest = () => {
           />
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6 w-full">
+        <form onSubmit={onSubmit} className="mt-8 space-y-6 w-full">
           <DateRangePicker
             startDate={trip.tripDetails.startDate}
             endDate={trip.tripDetails.endDate}
             updateTripField={updateTripField}
           />
+
+          {/* New Time Field */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Preferred Time
+            </label>
+            <input
+              type="time"
+              value={trip.tripDetails.preferredTime}
+              onChange={(e) => updateTripField("preferredTime", e.target.value)}
+              className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
+            />
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

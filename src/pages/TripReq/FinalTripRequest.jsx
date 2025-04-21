@@ -7,7 +7,7 @@ import { useUser } from "@/context/UserContext";
 import { useState } from "react";
 import Modal from "react-modal";
 import Lottie from "lottie-react";
-import tickmark from "../../assets/tickmark.json"; // Adjust path to your Lottie JSON file
+import tickmark from "../../assets/tickmark.json";
 
 // Bind modal to your appElement for accessibility
 Modal.setAppElement("#root");
@@ -20,8 +20,17 @@ const FinalTripRequest = () => {
 
   const handleFinalRequest = async () => {
     try {
-      await saveToFirestore(trip);
-      // Reset trip state after successful submission
+      const tripToSave = {
+        ...trip,
+        userInfo: {
+          email: user.email,
+          uid: user.uid,
+          role: user.role || "traveler",
+        },
+      };
+
+      await saveToFirestore(tripToSave);
+
       setTrip({
         userInfo: {
           email: user.email,
@@ -31,6 +40,7 @@ const FinalTripRequest = () => {
         tripDetails: {
           startDate: "",
           endDate: "",
+          preferredTime: "", // Reset preferredTime
           destinations: [],
           travelType: "",
           maleCount: 0,
@@ -49,11 +59,13 @@ const FinalTripRequest = () => {
           locations: [],
         },
         createdAt: null,
+        deadline: null, // Reset deadline
         status: "pending",
+        bids: [],
       });
-      // Show success modal
+
       setIsModalOpen(true);
-      // Auto-close modal and navigate after 3 seconds
+
       setTimeout(() => {
         setIsModalOpen(false);
         navigate("/dashboard");
@@ -88,6 +100,13 @@ const FinalTripRequest = () => {
         )
       : 0;
 
+  // Format deadline for display (if it exists)
+  const formatDeadline = (deadline) => {
+    if (!deadline) return "Not set";
+    const date = deadline.toDate ? deadline.toDate() : new Date(deadline);
+    return date.toLocaleString();
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-[#F5F6F5] p-6">
@@ -98,7 +117,7 @@ const FinalTripRequest = () => {
         <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
           {/* User Info */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Contact Information
             </h2>
             <p className="text-gray-700">
@@ -107,9 +126,29 @@ const FinalTripRequest = () => {
             </p>
           </div>
 
+          {/* Travel Dates and Time */}
+          <div>
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
+              Travel Dates and Time
+            </h2>
+            <p className="text-gray-700">
+              Start Date: {tripDetails.startDate || "Not set"} <br />
+              End Date: {tripDetails.endDate || "Not set"} <br />
+              Preferred Time: {tripDetails.preferredTime || "Not set"}
+            </p>
+          </div>
+
+          {/* Deadline */}
+          <div>
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
+              Bidding Deadline
+            </h2>
+            <p className="text-gray-700">{formatDeadline(trip.deadline)}</p>
+          </div>
+
           {/* Travel Type */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Travel Type
             </h2>
             <p className="text-gray-700">
@@ -129,7 +168,7 @@ const FinalTripRequest = () => {
 
           {/* Destinations */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Destinations
             </h2>
             <p className="text-gray-700">
@@ -141,7 +180,7 @@ const FinalTripRequest = () => {
 
           {/* Custom Locations */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Places to Visit
             </h2>
             {tripDetails.locations.length > 0 ? (
@@ -162,7 +201,7 @@ const FinalTripRequest = () => {
 
           {/* Accommodation */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Accommodation
             </h2>
             <p className="text-gray-700">
@@ -174,7 +213,7 @@ const FinalTripRequest = () => {
 
           {/* Transportation */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Transportation
             </h2>
             <p className="text-gray-700">
@@ -191,7 +230,7 @@ const FinalTripRequest = () => {
 
           {/* Food Preference */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Food Preference
             </h2>
             <p className="text-gray-700">
@@ -204,7 +243,7 @@ const FinalTripRequest = () => {
 
           {/* Interests */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Interests & Activities
             </h2>
             <p className="text-gray-700">
@@ -214,7 +253,7 @@ const FinalTripRequest = () => {
 
           {/* Remarks */}
           <div>
-            <h2 className="text-lg font-semibold text-[#2E4A47] mb-2">
+            <h2 className="text-[20px] font-semibold text-[#2E4A47] mb-2">
               Special Requests
             </h2>
             <p className="text-gray-700">
@@ -266,7 +305,7 @@ const FinalTripRequest = () => {
             },
             overlay: {
               backgroundColor: "rgba(0, 0, 0, 0.5)",
-              zIndex: 1000, // Ensure modal is above other content
+              zIndex: 1000,
             },
           }}>
           <div className="w-16 h-16 mx-auto mb-4">

@@ -7,80 +7,7 @@ import { useTripRequest } from "@/context/TripRequestContext";
 import { db } from "../../../firebase.config";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import illustration from "../../assets/images/undraw_vintage_q09n.svg";
-import {
-  FaUser,
-  FaMapMarkerAlt,
-  FaClock,
-  FaMoneyBillWave,
-} from "react-icons/fa";
-
-// TripCard component
-function TripCard({ trip, onClick }) {
-  const calculateTimeLeft = (createdAt) => {
-    const now = new Date();
-    const created = new Date(createdAt);
-    const diffMs = now - created;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
-    return `${diffHrs}:${diffMins.toString().padStart(2, "0")}:${diffSecs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  return (
-    <div className="bg-[#FFF5E6] border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col gap-3 w-full">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <FaUser className="text-gray-600 flex-shrink-0" />
-          <span className="text-gray-800 truncate">
-            <strong>Travel Type:</strong> {trip.tripDetails.travelType} (
-            {trip.tripDetails.maleCount +
-              trip.tripDetails.femaleCount +
-              trip.tripDetails.kidsCount}{" "}
-            people)
-          </span>
-        </div>
-        <div className="flex items-center gap-2 overflow-hidden">
-          <FaMapMarkerAlt className="text-gray-600 flex-shrink-0" />
-          <span className="text-gray-800 truncate">
-            {trip.tripDetails.destinations.join(", ")}
-          </span>
-        </div>
-      </div>
-      <div className="text-gray-800 truncate">
-        <strong>Dates:</strong> {trip.tripDetails.startDate} to{" "}
-        {trip.tripDetails.endDate}
-      </div>
-      <div className="text-gray-800 truncate">
-        <strong>Username:</strong> {trip.userInfo.email.split("@")[0]}
-      </div>
-      <div className="text-gray-800 truncate">
-        <strong>Email:</strong> {trip.userInfo.email}
-      </div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-2">
-        <button
-          className="bg-[#FFB547] text-white px-4 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto"
-          onClick={onClick}>
-          <span className="text-lg">+</span> View Details
-        </button>
-        <div className="flex items-center gap-2 overflow-hidden">
-          <FaClock className="text-gray-600 flex-shrink-0" />
-          <span className="text-gray-800 truncate">
-            Time Left: {calculateTimeLeft(trip.createdAt)}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 overflow-hidden">
-          <FaMoneyBillWave className="text-gray-600 flex-shrink-0" />
-          <span className="text-gray-800 truncate">
-            Bid Status:{" "}
-            {trip.bids.length > 0 ? `${trip.bids.length} Bids` : "No Bids Yet"}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
+import TripCard from "@/components/dashcomponents/TripCard";
 
 function MyTrips() {
   const { user } = useUser();
@@ -95,10 +22,19 @@ function MyTrips() {
 
   useEffect(() => {
     const fetchTrips = async () => {
-      if (!user?.email) return;
+      if (!user?.email || !user?.uid) {
+        console.log("User not authenticated or missing email/uid.");
+        return;
+      }
+
       try {
         const tripsRef = collection(db, "tripRequests");
-        const q = query(tripsRef, where("userInfo.email", "==", user.email));
+        // Query trips where both email and uid match
+        const q = query(
+          tripsRef,
+          where("userInfo.email", "==", user.email),
+          where("userInfo.uid", "==", user.uid)
+        );
         const querySnapshot = await getDocs(q);
         const tripsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -107,7 +43,7 @@ function MyTrips() {
         setTrips(tripsData);
         setFilteredTrips(tripsData);
       } catch (err) {
-        console.log("Error fetching trips:", err);
+        console.error("Error fetching trips:", err);
       }
     };
 
@@ -148,6 +84,11 @@ function MyTrips() {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
       setCurrentPage(pageNumber);
     }
+  };
+
+  // Handle trip selection with user validation
+  const handleTripClick = (selectedTrip) => {
+    setTrip(selectedTrip, user); // Pass the current user for validation
   };
 
   return (
@@ -222,7 +163,7 @@ function MyTrips() {
           </select>
           <div className="flex gap-2">
             <button
-              className="bg-[#FFB547] px-4 py-2 rounded-lg text-white"
+              className="bg-[#2E4A47] px-4 py-2 rounded-lg text-white"
               onClick={() => {
                 setSearchTerm("");
                 setFilterActivated(false);
@@ -231,7 +172,7 @@ function MyTrips() {
               }}>
               Refresh
             </button>
-            <button className="bg-[#FFB547] px-4 py-2 rounded-lg text-white">
+            <button className="bg-[#2E4A47] px-4 py-2 rounded-lg text-white">
               Filter
             </button>
           </div>
@@ -243,7 +184,7 @@ function MyTrips() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onClick={() => setTrip(trip)}
+                onClick={() => handleTripClick(trip)} // Use the validated handler
               />
             ))
           ) : (
@@ -254,7 +195,7 @@ function MyTrips() {
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-3 mt-10">
             <button
-              className="bg-[#FFB547] text-white px-3 py-1 rounded disabled:opacity-50"
+              className="bg-[#2E4A47] text-white px-3 py-1 rounded disabled:opacity-50"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}>
               Previous
@@ -265,8 +206,8 @@ function MyTrips() {
                   key={page}
                   className={`px-3 py-1 rounded ${
                     currentPage === page
-                      ? "bg-[#FFB547] text-white"
-                      : "bg-white border border-[#FFB547] text-[#FFB547]"
+                      ? "bg-[#2E4A47] text-white"
+                      : "bg-white border border-[#2E4A47] text-[#2E4A47]"
                   }`}
                   onClick={() => handlePageChange(page)}>
                   {page}
@@ -274,7 +215,7 @@ function MyTrips() {
               )
             )}
             <button
-              className="bg-[#FFB547] text-white px-3 py-1 rounded disabled:opacity-50"
+              className="bg-[#2E4A47] text-white px-3 py-1 rounded disabled:opacity-50"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}>
               Next

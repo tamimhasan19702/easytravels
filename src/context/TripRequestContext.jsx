@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import { useUser } from "./UserContext";
 import { db } from "../../firebase.config";
-import { doc, setDoc, addDoc, collection } from "firebase/firestore";
+import { doc, setDoc, addDoc, collection, Timestamp } from "firebase/firestore";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
@@ -16,12 +16,11 @@ export const TripRequestProvider = ({ children }) => {
 
   // Initialize trip state with user info and bids field
   const [trip, setTrip] = useState({
-    userInfo: user
-      ? { email: user.email, uid: user.uid, role: user.role || "traveler" }
-      : null,
+    userInfo: null,
     tripDetails: {
       startDate: "",
       endDate: "",
+      preferredTime: "", // New field for preferred time
       destinations: [],
       travelType: "",
       maleCount: 0,
@@ -40,39 +39,53 @@ export const TripRequestProvider = ({ children }) => {
       locations: [],
     },
     createdAt: null,
+    deadline: null, // New field for 24-hour deadline
     status: "pending",
-    bids: [], // Array to store multiple agent bids
+    bids: [],
   });
 
   // Save to Firestore (called only from FinalTripRequest)
   const saveToFirestore = async (tripData) => {
     try {
-      // Ensure the trip data includes all necessary fields
+      // Calculate the deadline as 24 hours from createdAt
+      const createdAt = Timestamp.now();
+      const deadline = Timestamp.fromMillis(
+        new Date().getTime() + 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+      );
+
       const tripToSave = {
         ...tripData,
-        createdAt: new Date().toISOString(), // Add server timestamp for creation time
-        status: "pending", // Ensure status is set
-        bids: tripData.bids || [], // Initialize bids as empty array if not provided
+        createdAt: createdAt,
+        deadline: deadline, // Add the calculated deadline
+        status: "pending",
+        bids: tripData.bids || [],
       };
 
-      // Create a new document in the "tripRequests" collection
       const docRef = await addDoc(collection(db, "tripRequests"), tripToSave);
       console.log("New trip request added with ID: ", docRef.id);
-      return docRef.id; // Return the new document ID if needed
+      return docRef.id;
     } catch (error) {
       console.error("Error adding trip request to Firestore: ", error);
-      throw error; // Re-throw the error to handle it in the component
+      throw error;
     }
   };
 
   // Handle form submission (updates state and redirects to final review)
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, callback) => {
     e.preventDefault();
     if (!trip.tripDetails.termsAgreed) {
-      alert("Please agree to the terms and conditions.");
+      alert("You must agree to the Terms & Conditions.");
       return;
     }
-    navigate("/final-tripreq");
+    if (!trip.tripDetails.startDate || !trip.tripDetails.endDate) {
+      alert("Please select a date range for your trip.");
+      return;
+    }
+    if (trip.tripDetails.destinations.length === 0) {
+      alert("Please select at least one destination.");
+      return;
+    }
+    if (callback) callback();
   };
 
   // Function to add a bid (for agents, typically called from an agent-facing component)
@@ -105,10 +118,26 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
+  // Add a validation function when setting the trip
+  const setTripWithValidation = (newTrip, currentUser) => {
+    if (!currentUser || !newTrip.userInfo) {
+      console.error("User or trip userInfo is missing.");
+      return;
+    }
+    if (
+      newTrip.userInfo.email !== currentUser.email ||
+      newTrip.userInfo.uid !== currentUser.uid
+    ) {
+      console.error("User does not match the trip creator.");
+      return;
+    }
+    setTrip(newTrip);
+  };
+
   // Context value
   const value = {
     trip,
-    setTrip,
+    setTrip: setTripWithValidation,
     handleSubmit,
     saveToFirestore,
     addBid, // Expose addBid for agent functionality
