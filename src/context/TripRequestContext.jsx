@@ -47,16 +47,15 @@ export const TripRequestProvider = ({ children }) => {
   // Save to Firestore (called only from FinalTripRequest)
   const saveToFirestore = async (tripData) => {
     try {
-      // Calculate the deadline as 24 hours from createdAt
       const createdAt = Timestamp.now();
       const deadline = Timestamp.fromMillis(
-        new Date().getTime() + 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+        new Date().getTime() + 24 * 60 * 60 * 1000
       );
 
       const tripToSave = {
         ...tripData,
         createdAt: createdAt,
-        deadline: deadline, // Add the calculated deadline
+        deadline: deadline,
         status: "pending",
         bids: tripData.bids || [],
       };
@@ -109,7 +108,7 @@ export const TripRequestProvider = ({ children }) => {
         bids: [...trip.bids, newBid],
       };
       await setDoc(tripRef, updatedTrip, { merge: true });
-      setTrip(updatedTrip); // Update local state
+      setTrip(updatedTrip);
       console.log("Bid added successfully by agent:", user.uid);
       return newBid;
     } catch (error) {
@@ -122,16 +121,17 @@ export const TripRequestProvider = ({ children }) => {
   const setTripWithValidation = (newTrip, currentUser) => {
     if (!currentUser || !newTrip.userInfo) {
       console.error("User or trip userInfo is missing.");
-      return;
+      return false;
     }
     if (
       newTrip.userInfo.email !== currentUser.email ||
       newTrip.userInfo.uid !== currentUser.uid
     ) {
       console.error("User does not match the trip creator.");
-      return;
+      return false;
     }
     setTrip(newTrip);
+    return true;
   };
 
   // Context value

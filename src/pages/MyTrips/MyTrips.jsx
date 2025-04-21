@@ -8,10 +8,12 @@ import { db } from "../../../firebase.config";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import illustration from "../../assets/images/undraw_vintage_q09n.svg";
 import TripCard from "@/components/dashcomponents/TripCard";
+import { useNavigate } from "react-router-dom";
 
 function MyTrips() {
   const { user } = useUser();
-  const { trip, setTrip } = useTripRequest();
+  const { setTrip } = useTripRequest();
+  const navigate = useNavigate();
 
   const [trips, setTrips] = useState([]);
   const [filteredTrips, setFilteredTrips] = useState([]);
@@ -29,7 +31,6 @@ function MyTrips() {
 
       try {
         const tripsRef = collection(db, "tripRequests");
-        // Query trips where both email and uid match
         const q = query(
           tripsRef,
           where("userInfo.email", "==", user.email),
@@ -86,9 +87,13 @@ function MyTrips() {
     }
   };
 
-  // Handle trip selection with user validation
   const handleTripClick = (selectedTrip) => {
-    setTrip(selectedTrip, user); // Pass the current user for validation
+    const isTripSet = setTrip(selectedTrip, user); // Set the specific trip in context
+    if (isTripSet) {
+      navigate("/view-details"); // Navigate to ViewDetails page only if trip is set
+    } else {
+      alert("You do not have permission to view this trip.");
+    }
   };
 
   return (
@@ -184,7 +189,7 @@ function MyTrips() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onClick={() => handleTripClick(trip)} // Use the validated handler
+                onClick={() => handleTripClick(trip)}
               />
             ))
           ) : (

@@ -78,7 +78,7 @@ function TripCard({ trip, onClick }) {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-3">
         <motion.button
-          className="bg-[#2E4A47] text-white px-5 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto hover:bg-indigo-700 transition-colors duration-200"
+          className="bg-[#2E4A47] text-white px-5 py-2 rounded-lg flex items-center gap-2 w-full sm:w-auto hover:bg-[#1F3634] transition-colors duration-200"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClick}>
