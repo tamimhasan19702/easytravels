@@ -5,16 +5,20 @@ import { useNavigate } from "react-router-dom";
 import { useTripRequest } from "@/context/TripRequestContext";
 import illustration from "../../assets/images/undraw_vintage_q09n.svg";
 import { FaArrowLeft } from "react-icons/fa";
+import AgBidRequest from "@/components/AgencyComponents/AgBidRequest";
+import { useUser } from "@/context/UserContext";
+import { useEffect } from "react";
 
 const ViewDetails = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const { trip } = useTripRequest();
 
-  // Navigate back to MyTrips if no trip is selected
-  if (!trip || !trip.userInfo) {
-    navigate("/my-trips");
-    return null;
-  }
+  useEffect(() => {
+    if (!trip || !trip.userInfo) {
+      navigate("/my-trips");
+    }
+  }, [trip, navigate]);
 
   const { tripDetails, userInfo, createdAt, deadline, status, bids } = trip;
 
@@ -274,6 +278,8 @@ const ViewDetails = () => {
             </label>
           </div>
         </div>
+
+        {user && user?.role === "Agency" && <AgBidRequest />}
       </div>
     </DashboardLayout>
   );
