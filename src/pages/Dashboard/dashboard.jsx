@@ -63,6 +63,8 @@ function Dashboard() {
         const userData = querySnapshot.docs[0].data();
         setDbUser(userData);
         setIsLoading(false);
+
+        console.log("User data:", userData);
       } catch (err) {
         console.error("Error fetching user data from Firestore:", err);
         setError("Failed to fetch user data. Please try again later.");

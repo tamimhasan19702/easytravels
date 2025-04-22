@@ -118,26 +118,11 @@ export const TripRequestProvider = ({ children }) => {
   };
 
   // Add a validation function when setting the trip
-  const setTripWithValidation = (newTrip, currentUser) => {
-    if (!currentUser || !newTrip.userInfo) {
-      console.error("User or trip userInfo is missing.");
-      return false;
-    }
-    if (
-      newTrip.userInfo.email !== currentUser.email ||
-      newTrip.userInfo.uid !== currentUser.uid
-    ) {
-      console.error("User does not match the trip creator.");
-      return false;
-    }
-    setTrip(newTrip);
-    return true;
-  };
 
   // Context value
   const value = {
     trip,
-    setTrip: setTripWithValidation,
+    setTrip,
     handleSubmit,
     saveToFirestore,
     addBid, // Expose addBid for agent functionality
