@@ -5,8 +5,6 @@ import { useUser } from "@/context/UserContext";
 import { useTripRequest } from "@/context/TripRequestContext";
 import { useNavigate } from "react-router-dom";
 import TripCard from "../dashcomponents/TripCard";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
-import { db } from "../../../firebase.config";
 
 function AgDashboard() {
   const { user } = useUser();
@@ -20,15 +18,6 @@ function AgDashboard() {
   const [travelTypeFilter, setTravelTypeFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState(null);
-  const [showBidModal, setShowBidModal] = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState(null);
-  const [bidData, setBidData] = useState({
-    proposedItinerary: "",
-    pricingTotal: "",
-    accommodationPlan: "",
-    transportationPlan: "",
-    foodPlan: "",
-  });
   const tripsPerPage = 6;
 
   // Fetch all trips on mount
@@ -113,89 +102,24 @@ function AgDashboard() {
     }
   };
 
-  // Open bid modal
+  // Handle trip click to navigate to view-details
   const handleTripClick = (trip) => {
-    if (trip.deadline && new Date(trip.deadline) < new Date()) {
-      setError("Bidding is closed for this trip.");
-      return;
-    }
-    if (trip.status !== "pending") {
-      setError("This trip is not open for bidding.");
-      return;
-    }
-    setSelectedTrip(trip);
-    setTrip(trip);
-    setShowBidModal(true);
-  };
-
-  // Handle bid form input changes
-  const handleBidChange = (e) => {
-    const { name, value } = e.target;
-    setBidData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Submit bid to Firestore
-  const handleBidSubmit = async (e) => {
-    e.preventDefault();
-    if (
-      !bidData.proposedItinerary ||
-      !bidData.pricingTotal ||
-      !bidData.accommodationPlan ||
-      !bidData.transportationPlan ||
-      !bidData.foodPlan
-    ) {
-      setError("All bid fields are required.");
-      return;
-    }
-
-    const bid = {
-      bidId: `bid_${Math.random().toString(36).substr(2, 9)}`,
-      agencyId: user.uid,
-      agencyName: user.name || "Unknown Agency", // Adjust based on user data
-      proposedItinerary: bidData.proposedItinerary,
-      pricing: {
-        total: parseFloat(bidData.pricingTotal),
-        breakdown: {}, // Add breakdown if needed
-      },
-      accommodationPlan: bidData.accommodationPlan,
-      transportationPlan: bidData.transportationPlan,
-      foodPlan: bidData.foodPlan,
-      submittedAt: new Date().toISOString(),
-      status: "pending",
-    };
-
     try {
-      const tripRef = doc(db, "tripRequests", selectedTrip.id);
-      await updateDoc(tripRef, {
-        bids: arrayUnion(bid),
-      });
-      setShowBidModal(false);
-      setBidData({
-        proposedItinerary: "",
-        pricingTotal: "",
-        accommodationPlan: "",
-        transportationPlan: "",
-        foodPlan: "",
-      });
-      setError(null);
-      window.location.reload(); // Refresh to update trip list
-    } catch (err) {
-      console.error("Error submitting bid:", err);
-      setError("Failed to submit bid.");
+      if (trip.deadline && new Date(trip.deadline) < new Date()) {
+        setError("Bidding is closed for this trip.");
+        return;
+      }
+      if (trip.status !== "pending") {
+        setError("This trip is not open for bidding.");
+        return;
+      }
+      setTrip(trip);
+      console.log("Selected trip:", trip);
+      navigate("/view-details");
+    } catch (error) {
+      console.error("Error selecting trip:", error);
+      setError("Failed to view trip details.");
     }
-  };
-
-  // Close bid modal
-  const handleCloseModal = () => {
-    setShowBidModal(false);
-    setBidData({
-      proposedItinerary: "",
-      pricingTotal: "",
-      accommodationPlan: "",
-      transportationPlan: "",
-      foodPlan: "",
-    });
-    setError(null);
   };
 
   // Handle Refresh button
@@ -282,98 +206,6 @@ function AgDashboard() {
             disabled={currentPage === totalPages}>
             Next
           </button>
-        </div>
-      )}
-
-      {/* Bid Modal */}
-      {showBidModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Submit Bid for Trip</h2>
-            <form onSubmit={handleBidSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Proposed Itinerary
-                </label>
-                <textarea
-                  name="proposedItinerary"
-                  value={bidData.proposedItinerary}
-                  onChange={handleBidChange}
-                  className="w-full p-2 border rounded-lg"
-                  rows="4"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Total Price (USD)
-                </label>
-                <input
-                  type="number"
-                  name="pricingTotal"
-                  value={bidData.pricingTotal}
-                  onChange={handleBidChange}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Accommodation Plan
-                </label>
-                <input
-                  type="text"
-                  name="accommodationPlan"
-                  value={bidData.accommodationPlan}
-                  onChange={handleBidChange}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Transportation Plan
-                </label>
-                <input
-                  type="text"
-                  name="transportationPlan"
-                  value={bidData.transportationPlan}
-                  onChange={handleBidChange}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
-                  Food Plan
-                </label>
-                <input
-                  type="text"
-                  name="foodPlan"
-                  value={bidData.foodPlan}
-                  onChange={handleBidChange}
-                  className="w-full p-2 border rounded-lg"
-                  required
-                />
-              </div>
-              {error && (
-                <div className="text-red-500 text-sm mb-4">{error}</div>
-              )}
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-4 py-2 bg-gray-300 rounded-lg">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#2E4A47] text-white rounded-lg">
-                  Submit Bid
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
       )}
     </div>
