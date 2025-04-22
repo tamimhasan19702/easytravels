@@ -18,6 +18,7 @@ import {
   Legend,
 } from "chart.js";
 import { stats, upcomingBookings, recentTrips, graphData } from "@/constant";
+import AgDashboard from "@/components/AgencyComponents/AgDashboard";
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,8 +64,6 @@ function Dashboard() {
         const userData = querySnapshot.docs[0].data();
         setDbUser(userData);
         setIsLoading(false);
-
-        console.log("User data:", userData);
       } catch (err) {
         console.error("Error fetching user data from Firestore:", err);
         setError("Failed to fetch user data. Please try again later.");
@@ -345,13 +344,7 @@ function Dashboard() {
           </div>
         )}
 
-        {user.role === "Agency" && (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-[#2E4A47] font-semibold mb-4">
-              Agency Dashboard
-            </h3>
-          </div>
-        )}
+        {user.role === "Agency" && <AgDashboard />}
       </div>
     </DashboardLayout>
   );

@@ -3,7 +3,14 @@
 import { createContext, useContext, useState } from "react";
 import { useUser } from "./UserContext";
 import { db } from "../../firebase.config";
-import { doc, setDoc, addDoc, collection, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  addDoc,
+  collection,
+  Timestamp,
+  getDocs,
+} from "firebase/firestore";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
@@ -89,7 +96,7 @@ export const TripRequestProvider = ({ children }) => {
 
   // Function to add a bid (for agents, typically called from an agent-facing component)
   const addBid = async (tripId, agentBid) => {
-    if (!user || user.role !== "agent") {
+    if (!user || user.role !== "Agency") {
       throw new Error("Only agents can submit bids.");
     }
 
@@ -117,7 +124,16 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
-  // Add a validation function when setting the trip
+  const fetchAllTrips = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "tripRequests"));
+      const trips = querySnapshot.docs.map((doc) => doc.data());
+      return trips;
+    } catch (error) {
+      console.error("Error fetching trips:", error);
+      throw error;
+    }
+  };
 
   // Context value
   const value = {
@@ -125,7 +141,8 @@ export const TripRequestProvider = ({ children }) => {
     setTrip,
     handleSubmit,
     saveToFirestore,
-    addBid, // Expose addBid for agent functionality
+    addBid,
+    fetchAllTrips,
   };
 
   return (
