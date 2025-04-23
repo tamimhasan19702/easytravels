@@ -1,11 +1,9 @@
 /** @format */
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import DashboardLayout from "../../components/DashboardLayout"; // Adjust path as needed
-import { db } from "../../../firebase.config";
-import { collection, query, where, getDocs } from "firebase/firestore";
 import travelIllustration from "../../assets/images/dashboard.svg"; // Adjust path to your illustration
 import { Bar } from "react-chartjs-2"; // For the graph
 import {
@@ -19,6 +17,7 @@ import {
 } from "chart.js";
 import { stats, upcomingBookings, recentTrips, graphData } from "@/constant";
 import AgDashboard from "@/components/AgencyComponents/AgDashboard";
+import { useState } from "react";
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,60 +30,33 @@ ChartJS.register(
 );
 
 function Dashboard() {
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const navigate = useNavigate();
-  const [dbUser, setDbUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Overview"); // State for tabs
 
+  // Redirect if not authenticated or still loading
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user || !user.email) {
-        setError("User not authenticated or email not available.");
-        setIsLoading(false);
-        navigate("/");
-        return;
-      }
+    if (!loading && !user) {
+      navigate("/");
+    }
+    console.log(user);
+  }, [user, loading, navigate]);
 
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", user.email));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          setError("No user found with this email in the database.");
-          setIsLoading(false);
-          return;
-        }
-
-        const userData = querySnapshot.docs[0].data();
-        setDbUser(userData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error fetching user data from Firestore:", err);
-        setError("Failed to fetch user data. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [user, navigate]);
-
-  // const handleLogout = async () => {
-  //   await logout();
-  //   navigate("/");
-  // };
-
-  if (!user) {
-    navigate("/");
-    return null;
+  // Show loading state while UserContext initializes
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="bg-[#F5F6F5] min-h-screen p-6">
+          <p className="text-[#2E4A47] text-lg font-medium">Loading...</p>
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  // Demo data for the graph (trips per month)
+  // Redirect if user is not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <DashboardLayout>
@@ -97,47 +69,31 @@ function Dashboard() {
               Welcome to the Dashboard
             </h1>
 
-            {/* Display loading state */}
-            {isLoading && (
-              <p className="text-[#2E4A47] text-lg font-medium mb-4">
-                Loading user data...
+            {/* Display user data from UserContext */}
+            <div className="mb-6">
+              <p className="text-[#2E4A47] text-base font-semibold mb-2">
+                Full Name: <span className="font-normal">{user.fullName}</span>
               </p>
-            )}
+              <p className="text-[#2E4A47] text-base font-semibold mb-2">
+                Email: <span className="font-normal">{user.email}</span>
+              </p>
+              <p className="text-[#2E4A47] text-base font-semibold mb-2">
+                Role: <span className="font-normal">{user.role}</span>
+              </p>
+              <p className="text-[#2E4A47] text-base font-semibold mb-4">
+                Phone Number:{" "}
+                <span className="font-normal">{user.phoneNumber}</span>
+              </p>
 
-            {/* Display error if any */}
-            {error && (
-              <p className="text-red-500 text-lg font-medium mb-4">{error}</p>
-            )}
-
-            {/* Display user data if available */}
-            {dbUser && !isLoading && !error && (
-              <div className="mb-6">
-                <p className="text-[#2E4A47] text-base font-semibold mb-2">
-                  Full Name:{" "}
-                  <span className="font-normal">{dbUser.fullName}</span>
-                </p>
-                <p className="text-[#2E4A47] text-base font-semibold mb-2">
-                  Email: <span className="font-normal">{dbUser.email}</span>
-                </p>
-                <p className="text-[#2E4A47] text-base font-semibold mb-2">
-                  Role: <span className="font-normal">{dbUser.role}</span>
-                </p>
-                <p className="text-[#2E4A47] text-base font-semibold mb-4">
-                  Phone Number:{" "}
-                  <span className="font-normal">{dbUser.phoneNumber}</span>
-                </p>
-
-                {user.role === "Traveler" && (
-                  <button
-                    onClick={() => navigate("/trip-request")}
-                    className="bg-[#9DAE11] text-white py-2 px-4 rounded-md font-medium hover:bg-[#8C9A0F] transition-colors flex items-center">
-                    <span className="material-icons mr-2">add</span>
-                    Trip Request
-                  </button>
-                )}
-                {/* Trip Request Button */}
-              </div>
-            )}
+              {user.role === "Traveler" && (
+                <button
+                  onClick={() => navigate("/trip-request")}
+                  className="bg-[#9DAE11] text-white py-2 px-4 rounded-md font-medium hover:bg-[#8C9A0F] transition-colors flex items-center">
+                  <span className="material-icons mr-2">add</span>
+                  Trip Request
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Right Side: Illustration */}
@@ -344,7 +300,7 @@ function Dashboard() {
           </div>
         )}
 
-        {user.role === "Agency" && <AgDashboard />}
+        {user.role === "agent" && <AgDashboard />}
       </div>
     </DashboardLayout>
   );

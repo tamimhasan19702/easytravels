@@ -19,7 +19,7 @@ function Signup() {
   const [firebaseError, setFirebaseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useUser();
+  const { login, loading } = useUser();
   const {
     register,
     handleSubmit,
@@ -37,7 +37,7 @@ function Signup() {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setValue("role", tab);
+    setValue("role", tab === "Agency" ? "agent" : "Traveler");
   };
 
   const onSubmit = async (data) => {
@@ -45,6 +45,7 @@ function Signup() {
       setIsLoading(true);
       setFirebaseError(null);
 
+      // Create user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         data.email,
@@ -52,26 +53,38 @@ function Signup() {
       );
       const user = userCredential.user;
 
+      // Refresh token
+      await user.getIdToken(true);
+      console.log("User created:", user.uid);
+
+      // Create user document in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber,
-        role: data.role,
+        role: data.role, // "agent" or "Traveler"
         createdAt: new Date().toISOString(),
       });
+      console.log("User document created:", user.uid);
 
+      // Create user object for context
       const userData = {
         uid: user.uid,
-        fullName: data.fullName,
         email: data.email,
-        phoneNumber: data.phoneNumber,
         role: data.role,
+        fullName: data.fullName,
+        phoneNumber: data.phoneNumber,
       };
 
+      // Store user in context
       login(userData);
       navigate("/dashboard");
     } catch (error) {
+      console.error("Signup error:", error, {
+        code: error.code,
+        message: error.message,
+      });
       if (error.code === "auth/email-already-in-use") {
         setFirebaseError(
           "This email is already in use. Please use a different email."
@@ -80,26 +93,33 @@ function Signup() {
         setFirebaseError("Please enter a valid email address.");
       } else if (error.code === "auth/weak-password") {
         setFirebaseError("Password should be at least 6 characters.");
+      } else if (error.code === "permission-denied") {
+        setFirebaseError("Insufficient permissions to create user data.");
       } else {
-        setFirebaseError("An error occurred. Please try again.");
+        setFirebaseError(
+          error.message || "An error occurred. Please try again."
+        );
       }
-      console.error("Signup error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <>
       <Header />
-      <div className="container min-h-screen  flex flex-col lg:flex-row items-center justify-center gap-10 px-4">
+      <div className="container min-h-screen flex flex-col lg:flex-row items-center justify-center gap-10 px-4">
         <div className="mt-[100px] lg:mt-[0px] flex flex-col lg:flex-row items-center justify-center gap-[100px] px-4">
           <motion.div
             initial={{ opacity: 0, x: -500 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 1.5, ease: "easeInOut" }}
             className="w-full lg:w-1/2 flex items-center justify-center">
-            <div className="w-full ">
+            <div className="w-full">
               <Lottie animationData={Signin} loop={true} />
             </div>
           </motion.div>
@@ -290,7 +310,6 @@ function Signup() {
             </motion.div>
           </div>
         </div>
-        {/* Left Side: Animation */}
       </div>
     </>
   );

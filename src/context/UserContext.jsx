@@ -1,63 +1,78 @@
 /** @format */
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { signOut } from "firebase/auth"; // Import signOut from Firebase
-import { auth } from "../../firebase.config"; // Adjust path as needed
+import { auth, db } from "../../firebase.config";
+import { onAuthStateChanged, signOut, updateProfile } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import PropTypes from "prop-types";
 
 // Create the User Context
 const UserContext = createContext();
 
-// Session expiration time (e.g., 24 hours in milliseconds)
-const SESSION_DURATION = 120 * 60 * 1000; // 24 hours
-
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [sessionExpiry, setSessionExpiry] = useState(null);
+  const [loading, setLoading] = useState(true); // Track auth initialization
 
+  // Sync with Firebase Authentication and Firestore
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedExpiry = localStorage.getItem("sessionExpiry");
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Refresh token
+          await firebaseUser.getIdToken(true);
 
-    if (storedUser && storedExpiry) {
-      const expiryTime = parseInt(storedExpiry);
-      if (Date.now() < expiryTime) {
-        setUser(JSON.parse(storedUser));
-        setSessionExpiry(expiryTime);
+          // Fetch user data from Firestore
+          const userRef = doc(db, "users", firebaseUser.uid);
+          const userDoc = await getDoc(userRef);
+          if (!userDoc.exists()) {
+            console.error("User document not found:", firebaseUser.uid);
+            await signOut(auth);
+            setUser(null);
+            setLoading(false);
+            return;
+          }
+
+          const userData = userDoc.data();
+          // Map "Agency" to "agent" for consistency
+          const role = userData.role === "Agency" ? "agent" : userData.role;
+          const contextUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            role, // "agent" or "Traveler"
+            fullName: userData.fullName || "",
+            phoneNumber: userData.phoneNumber || "",
+          };
+          setUser(contextUser);
+          console.log("User synced:", contextUser);
+
+          // Set user fullname to the user state
+          await updateProfile(firebaseUser, {
+            displayName: contextUser.fullName,
+          });
+        } catch (error) {
+          console.error("Error syncing user:", error);
+          await signOut(auth);
+          setUser(null);
+        }
       } else {
-        logout();
+        setUser(null);
       }
-    }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (sessionExpiry) {
-      const checkSession = setInterval(() => {
-        if (Date.now() >= sessionExpiry) {
-          logout();
-        }
-      }, 1000 * 60); // Check every minute
-
-      return () => clearInterval(checkSession);
-    }
-  }, [sessionExpiry]);
-
   const login = (userData) => {
-    const expiryTime = Date.now() + SESSION_DURATION;
     setUser(userData);
-    setSessionExpiry(expiryTime);
-
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("sessionExpiry", expiryTime.toString());
+    console.log("User logged in:", userData);
   };
 
   const logout = async () => {
     try {
-      await signOut(auth); // Sign out from Firebase Authentication
+      await signOut(auth);
       setUser(null);
-      setSessionExpiry(null);
-      localStorage.removeItem("user");
-      localStorage.removeItem("sessionExpiry");
+      console.log("User logged out");
     } catch (error) {
       console.error("Logout error:", error);
     }
@@ -68,6 +83,7 @@ export const UserProvider = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!user,
+    loading,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

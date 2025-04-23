@@ -1,6 +1,6 @@
 /** @format */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
@@ -18,7 +18,7 @@ function Login() {
   const [firebaseError, setFirebaseError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login } = useUser(); // Get login function from context
+  const { user, login, loading } = useUser();
   const {
     register,
     handleSubmit,
@@ -31,9 +31,16 @@ function Login() {
   });
   const navigate = useNavigate();
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
+
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setValue("role", tab);
+    setValue("role", tab === "Agency" ? "agent" : "Traveler");
   };
 
   const onSubmit = async (data) => {
@@ -41,60 +48,84 @@ function Login() {
       setIsLoading(true);
       setFirebaseError(null);
 
-      // Step 1: Sign in user with email and password
+      // Step 1: Sign in with email and password
       const userCredential = await signInWithEmailAndPassword(
         auth,
         data.email,
         data.password
       );
-      const user = userCredential.user;
+      const firebaseUser = userCredential.user;
 
-      // Step 2: Fetch user data from Firestore
-      const userDoc = await getDoc(doc(db, "users", user.uid));
+      // Step 2: Refresh token
+      await firebaseUser.getIdToken(true);
+      console.log("User authenticated:", firebaseUser.uid);
+
+      // Step 3: Fetch user data from Firestore
+      const userRef = doc(db, "users", firebaseUser.uid);
+      console.log("Fetching user document:", userRef.path);
+      const userDoc = await getDoc(userRef);
       if (!userDoc.exists()) {
         throw new Error("User data not found in Firestore.");
       }
 
       const userData = userDoc.data();
-      const storedRole = userData.role;
+      // Map "Agency" to "agent"
+      const storedRole = userData.role === "Agency" ? "agent" : userData.role;
+      console.log("Fetched user data:", {
+        uid: firebaseUser.uid,
+        role: storedRole,
+      });
 
-      // Step 3: Verify role
+      // Step 4: Verify email and role
+      if (userData.email !== data.email) {
+        throw new Error("Email does not match the registered user.");
+      }
       if (storedRole !== data.role) {
         throw new Error(
           `Role mismatch: You are registered as a ${storedRole}, but you selected ${data.role}.`
         );
       }
 
-      // Step 4: Create user object for context
+      // Step 5: Create user object for context
       const contextUserData = {
-        uid: user.uid,
+        uid: firebaseUser.uid,
         email: data.email,
         role: storedRole,
-        phoneNumber: userData.phoneNumber,
+        fullName: userData.fullName || "",
+        phoneNumber: userData.phoneNumber || "",
       };
 
-      // Step 5: Store user in context
+      // Step 6: Store user in context
       login(contextUserData);
 
-      console.log("User signed in successfully:", user.uid);
+      console.log("User signed in successfully:", firebaseUser.uid);
       navigate("/dashboard");
     } catch (error) {
+      console.error("Login error:", error, {
+        code: error.code,
+        message: error.message,
+      });
       if (error.code === "auth/user-not-found") {
         setFirebaseError("No user found with this email.");
       } else if (error.code === "auth/wrong-password") {
         setFirebaseError("Incorrect password. Please try again.");
       } else if (error.code === "auth/invalid-email") {
         setFirebaseError("Please enter a valid email address.");
+      } else if (error.code === "permission-denied") {
+        setFirebaseError("Insufficient permissions to access user data.");
       } else {
         setFirebaseError(
           error.message || "An error occurred. Please try again."
         );
       }
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
