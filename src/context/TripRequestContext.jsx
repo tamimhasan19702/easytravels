@@ -5,11 +5,12 @@ import { useUser } from "./UserContext";
 import { db } from "../../firebase.config";
 import {
   doc,
-  setDoc,
   addDoc,
   collection,
   Timestamp,
   getDocs,
+  updateDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +20,6 @@ const TripRequestContext = createContext();
 
 export const TripRequestProvider = ({ children }) => {
   const { user } = useUser();
-  const navigate = useNavigate();
 
   // Initialize trip state with user info and bids field
   const [trip, setTrip] = useState({
@@ -94,28 +94,60 @@ export const TripRequestProvider = ({ children }) => {
     if (callback) callback();
   };
 
+  const hasAgencyBid = async (tripId, agencyId) => {
+    try {
+      const tripRef = doc(db, "tripRequests", tripId);
+      const tripDoc = await getDoc(tripRef);
+      if (!tripDoc.exists()) {
+        throw new Error("Trip does not exist.");
+      }
+      const tripData = tripDoc.data();
+      const bids = tripData.bids || [];
+      return bids.some((bid) => bid.agencyId === agencyId);
+    } catch (error) {
+      console.error("Error checking existing bids:", error);
+      throw error;
+    }
+  };
+
   // Function to add a bid (for agents, typically called from an agent-facing component)
+  // Function to add a bid (for agents)
   const addBid = async (tripId, agentBid) => {
-    if (!user || user.role !== "Agency") {
+    if (!user || user.role !== "agent") {
       throw new Error("Only agents can submit bids.");
     }
 
     const newBid = {
-      agentId: user.uid,
-      agentEmail: user.email,
-      bidAmount: agentBid.bidAmount,
-      bidTimestamp: new Date().toISOString(),
-      message: agentBid.message || "",
+      bidId: `bid_${Math.random().toString(36).substr(2, 9)}`,
+      agencyId: user.uid,
+      agencyName: agentBid.agencyName || user.name || "Unknown Agency",
+      coverLetterSubject: agentBid.coverLetterSubject || "",
+      agencyInfo: agentBid.agencyInfo || "",
+      pricing: {
+        total: parseFloat(agentBid.bidPrice) || 0,
+        breakdown: agentBid.pricingBreakdown || {},
+      },
+      documents: agentBid.documents || [],
+      submittedAt: new Date().toISOString(),
+      status: "pending",
+      isRead: false, // New field, default false
     };
 
     try {
       const tripRef = doc(db, "tripRequests", tripId);
-      const updatedTrip = {
-        ...trip,
-        bids: [...trip.bids, newBid],
-      };
-      await setDoc(tripRef, updatedTrip, { merge: true });
-      setTrip(updatedTrip);
+      await updateDoc(tripRef, {
+        bids: arrayUnion(newBid),
+      });
+
+      // Update local state if the current trip is being modified
+      if (trip.id === tripId) {
+        const updatedTrip = {
+          ...trip,
+          bids: [...trip.bids, newBid],
+        };
+        setTrip(updatedTrip);
+      }
+
       console.log("Bid added successfully by agent:", user.uid);
       return newBid;
     } catch (error) {
@@ -143,6 +175,7 @@ export const TripRequestProvider = ({ children }) => {
     saveToFirestore,
     addBid,
     fetchAllTrips,
+    hasAgencyBid,
   };
 
   return (

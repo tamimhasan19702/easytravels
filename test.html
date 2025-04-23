@@ -1,0 +1,53 @@
+<!-- @format -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Light/Dark Mode with Tailwind + !important</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .force-light {
+        background-color: white;
+        color: black;
+      }
+
+      .force-dark {
+        background-color: #111827; /* Tailwind gray-900 */
+        color: white;
+      }
+    </style>
+  </head>
+  <body
+    id="mainBody"
+    class="transition-colors duration-500 min-h-screen flex items-center justify-center force-dark">
+    <div class="text-center">
+      <h1 class="text-3xl font-bold mb-4">Tailwind Force Dark Mode Toggle</h1>
+      <button
+        id="theme-toggle"
+        class="px-6 py-2 bg-gray-200 text-black rounded hover:bg-gray-300 transition-all">
+        Toggle Light/Dark
+      </button>
+    </div>
+
+    <script>
+      const toggleBtn = document.getElementById("theme-toggle");
+      const body = document.getElementById("mainBody");
+
+      let isDark = true;
+
+      toggleBtn.addEventListener("click", () => {
+        isDark = !isDark;
+
+        if (isDark) {
+          body.classList.remove("force-light");
+          body.classList.add("force-dark");
+        } else {
+          body.classList.remove("force-dark");
+          body.classList.add("force-light");
+        }
+      });
+    </script>
+  </body>
+</html>
