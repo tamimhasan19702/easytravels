@@ -84,7 +84,7 @@ const Footer = () => {
           </di>
         </motion.div>
         <p className="text-center font-Inter text-base text-white">
-          Copyright @ ZenUI. All Rights Reserved.
+          Copyright @nbySoft 2025.
         </p>
       </div>
     </footer>

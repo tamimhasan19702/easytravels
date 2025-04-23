@@ -13,7 +13,7 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import PropTypes from "prop-types";
-import { useNavigate } from "react-router-dom";
+import { getDoc } from "firebase/firestore";
 
 // Create the TripRequestContext
 const TripRequestContext = createContext();
@@ -117,29 +117,38 @@ export const TripRequestProvider = ({ children }) => {
       throw new Error("Only agents can submit bids.");
     }
 
-    const newBid = {
-      bidId: `bid_${Math.random().toString(36).substr(2, 9)}`,
-      agencyId: user.uid,
-      agencyName: agentBid.agencyName || user.name || "Unknown Agency",
-      coverLetterSubject: agentBid.coverLetterSubject || "",
-      agencyInfo: agentBid.agencyInfo || "",
-      pricing: {
-        total: parseFloat(agentBid.bidPrice) || 0,
-        breakdown: agentBid.pricingBreakdown || {},
-      },
-      documents: agentBid.documents || [],
-      submittedAt: new Date().toISOString(),
-      status: "pending",
-      isRead: false, // New field, default false
-    };
-
     try {
       const tripRef = doc(db, "tripRequests", tripId);
+      const tripDoc = await getDoc(tripRef);
+      if (!tripDoc.exists()) {
+        throw new Error("Trip does not exist.");
+      }
+
+      const tripData = tripDoc.data();
+      const existingBid = tripData.bids?.find(
+        (bid) => bid.agencyId === user.uid
+      );
+      if (existingBid) {
+        throw new Error("You have already submitted a bid for this trip.");
+      }
+
+      const newBid = {
+        bidId: `bid_${Math.random().toString(36).substr(2, 9)}`,
+        isRead: false,
+        amount: parseFloat(agentBid.bidPrice) || 0,
+        agencyName: agentBid.agencyName || user.name || "Unknown Agency",
+        email: user.email || "Unknown Email",
+        number: agentBid.contactNumber || "Unknown Number",
+        coverLetter: agentBid.coverLetter || "",
+        attachments: agentBid.attachments || [],
+        submittedAt: new Date().toISOString(),
+        status: "pending",
+      };
+
       await updateDoc(tripRef, {
         bids: arrayUnion(newBid),
       });
 
-      // Update local state if the current trip is being modified
       if (trip.id === tripId) {
         const updatedTrip = {
           ...trip,

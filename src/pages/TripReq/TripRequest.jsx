@@ -1,11 +1,9 @@
 /** @format */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTripRequest } from "../../context/TripRequestContext";
-import { db } from "../../../firebase.config";
-import { collection, query, where, getDocs } from "firebase/firestore";
 import tripRequestImg from "../../assets/images/trip.svg";
 import DashboardLayout from "@/components/DashboardLayout";
 import Preloader from "@/components/Preloader";
@@ -17,14 +15,12 @@ import {
   DateRangePicker,
   GroupTravelFields,
 } from "@/components/dashcomponents/DashTripRequest";
+import { useState } from "react";
 
 const TripRequest = () => {
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const navigate = useNavigate();
   const { trip, setTrip, handleSubmit } = useTripRequest();
-  const [dbUser, setDbUser] = useState(null);
-  const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempDestinations, setTempDestinations] = useState([]);
@@ -33,48 +29,29 @@ const TripRequest = () => {
   const [transportationMethods, setTransportationMethods] = useState([""]);
   const [foodPreferences, setFoodPreferences] = useState([""]);
 
-  // Fetch user data from Firestore and sync with context
+  // Redirect if not authenticated or not a Traveler
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.email) {
-        setError("User not authenticated.");
-        setIsLoading(false);
+    if (!loading) {
+      if (!user) {
         navigate("/");
         return;
       }
-
-      try {
-        setIsLoading(true);
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", user.email));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) {
-          setError("No user found with this email.");
-          setIsLoading(false);
-          return;
-        }
-
-        const userData = querySnapshot.docs[0].data();
-        setDbUser(userData);
-        setTrip((prev) => ({
-          ...prev,
-          userInfo: {
-            email: user.email,
-            uid: user.uid,
-            role: userData.role || "traveler",
-          },
-        }));
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-        setError("Failed to fetch user data.");
-      } finally {
-        setIsLoading(false);
+      if (user.role !== "Traveler") {
+        navigate("/dashboard");
+        return;
       }
-    };
 
-    fetchUserData();
-  }, [user, navigate, setTrip]);
+      // Initialize trip with user data from context
+      setTrip((prev) => ({
+        ...prev,
+        userInfo: {
+          email: user.email,
+          uid: user.uid,
+          role: user.role,
+        },
+      }));
+    }
+  }, [user, loading, navigate, setTrip]);
 
   // Update trip field helper
   const updateTripField = (field, value) => {
@@ -161,14 +138,9 @@ const TripRequest = () => {
   };
 
   // Render states
-  if (isLoading) return <Preloader />;
-  if (error)
-    return <div className="text-red-500 text-center py-10">{error}</div>;
-  if (!user) {
-    navigate("/");
-    return null;
-  }
-
+  if (loading) return <Preloader />;
+  if (!user) return null;
+  if (user.role !== "Traveler") return null;
   if (isSubmitting) return <Preloader />;
 
   return (

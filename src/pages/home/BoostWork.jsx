@@ -3,8 +3,9 @@
 import { motion } from "framer-motion";
 
 import { variants3, variants4 } from "../../constant";
-import card_1_img_2 from "/Hero_images/Group 1000001520.png";
-import card_1_img_1 from "/Hero_images/Left images.png";
+import card_1_img_2 from "../../../public/Hero_images/car.json";
+import card_1_img_1 from "../../../public/Hero_images/flight";
+import Lottie from "lottie-react";
 
 const BoostWork = () => {
   return (
@@ -16,7 +17,7 @@ const BoostWork = () => {
           variants={variants3}
           viewport={{ once: true, amount: 0.5 }}
           className="left_content sm:mr-[-30px]">
-          <img src={card_1_img_1} alt="" className="w-full" />
+          <Lottie animationData={card_1_img_1} loop={true} className="w-full" />
         </motion.div>
         <motion.div
           initial="hidden"
@@ -26,16 +27,19 @@ const BoostWork = () => {
           className="right_content lg:mt-10">
           <div>
             <span className="bg-[#E5F5EF] text-[#52BD95] px-5 lg:py-4 py-3 rounded-md lg:text-[1.125em] text-[1em] font-Inter font-medium">
-              Boost Your Work
+              Find Your Perfect Flight
             </span>
-            <h3 className="lg:mt-10 mt-7">Boost Your Productivity</h3>
+            <h3 className="lg:mt-10 mt-7">
+              Book Flights with Ease & Confidence
+            </h3>
             <p className="!font-normal mt-5 max-w-[500px]">
-              From they fine john he give of rich he. They age and draw mrs
-              like. Improving end distrusts may instantly was household
-              applauded incommode. Why kept very ever home mrs. Considered
-              sympathize ten uncommonly occasional assistance sufficient not.
-              Letter of on become he tended active enable to. Vicinity relation
-              sensible sociable surprise screened no up as.
+              Booking flights with us is simple, reliable, and rewarding. With
+              access to over 500+ global airlines, flexible date searches, and
+              real-time price alerts, you can effortlessly find the best deals
+              tailored to your travel needs. We also offer a Price Match
+              Guarantee, 24/7 customer support for peace of mind, and carbon
+              offset options to help you travel sustainably—all while securing
+              your tickets in just a few clicks.
             </p>
             <a href="" className="btn primary_btn lg:mt-10 mt-5">
               Explore Features
@@ -52,16 +56,21 @@ const BoostWork = () => {
           className="left_content sm:mr-[-30px] max-lg:order-2 lg:mt-10">
           <div>
             <span className="bg-[#E5F5EF] text-[#52BD95] px-5 lg:py-4 py-3 rounded-md lg:text-[1.125em] text-[1em] font-Inter font-medium">
-              Boost Your Work
+              Explore the World’s Hidden Gems
             </span>
-            <h3 className="lg:mt-10 mt-7">Boost Your Productivity</h3>
+            <h3 className="lg:mt-10 mt-7">
+              Discover Unforgettable Sightseeing Experiences
+            </h3>
             <p className="!font-normal mt-5 max-w-[500px]">
-              From they fine john he give of rich he. They age and draw mrs
-              like. Improving end distrusts may instantly was household
-              applauded incommode. Why kept very ever home mrs. Considered
-              sympathize ten uncommonly occasional assistance sufficient not.
-              Letter of on become he tended active enable to. Vicinity relation
-              sensible sociable surprise screened no up as.
+              Our sightseeing experiences stand out with handpicked tours led by
+              local experts, offering skip-the-line access to save time and
+              customizable itineraries to match your pace. Whether you're
+              exploring cultural landmarks like the Louvre or ancient ruins,
+              seeking adventure through hiking and zip-lining, or indulging in
+              food tours and wine tastings, we cater to every interest. From
+              iconic destinations like Paris’ Eiffel Tower and Tokyo’s Mount
+              Fuji to New York’s Broadway shows, our diverse options ensure
+              unforgettable adventures tailored just for you.
             </p>
             <a href="" className="btn primary_btn lg:mt-10 mt-5">
               Explore Features
@@ -74,7 +83,7 @@ const BoostWork = () => {
           variants={variants4}
           viewport={{ once: true, amount: 0.3 }}
           className="right_content max-lg:order-1">
-          <img src={card_1_img_2} alt="" className="w-full" />
+          <Lottie animationData={card_1_img_2} loop={true} className="w-full" />
         </motion.div>
       </div>
     </section>

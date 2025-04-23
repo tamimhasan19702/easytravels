@@ -23,7 +23,7 @@ function AgDashboard() {
   // Fetch all trips on mount
   useEffect(() => {
     const loadTrips = async () => {
-      if (!user || user.role !== "Agency") {
+      if (!user || user.role !== "agent") {
         setError("You do not have permission to access the agency dashboard.");
         return;
       }
