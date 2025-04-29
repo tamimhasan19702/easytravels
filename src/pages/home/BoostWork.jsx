@@ -59,7 +59,7 @@ const BoostWork = () => {
               Explore the World’s Hidden Gems
             </span>
             <h3 className="lg:mt-10 mt-7">
-              Discover Unforgettable Sightseeing Experiences
+              Discover Unforgettable Sightseeing Experiences v{" "}
             </h3>
             <p className="!font-normal mt-5 max-w-[500px]">
               Our sightseeing experiences stand out with handpicked tours led by
