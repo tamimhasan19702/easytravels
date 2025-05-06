@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 import { useTripRequest } from "@/context/TripRequestContext";
 import illustration from "../../assets/images/undraw_vintage_q09n.svg";
+import agentIllustration from "../../assets/images/bid.svg";
 import { FaArrowLeft } from "react-icons/fa";
 import AgBidRequest from "@/components/AgencyComponents/AgBidRequest";
 import { useUser } from "@/context/UserContext";
@@ -60,19 +61,39 @@ const ViewDetails = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/my-trips")}
+              onClick={() => {
+                user.role === "traveler" && navigate("/my-trips");
+                user.role === "agent" && navigate("/agent-dashboard");
+              }}
               className="text-[#2E4A47] hover:text-[#1F3634] transition-colors duration-200">
               <FaArrowLeft size={24} />
             </button>
-            <h1 className="text-3xl md:text-5xl font-bold text-[#2E4A47]">
-              Trip Details
-            </h1>
+            {user.role === "traveler" && (
+              <h1 className="text-3xl md:text-5xl font-bold text-[#2E4A47]">
+                Trip Request
+              </h1>
+            )}
+            {user.role === "agent" && (
+              <h1 className="text-3xl md:text-5xl font-bold text-[#2E4A47]">
+                Submit Bid Request
+              </h1>
+            )}
           </div>
-          <img
-            src={illustration}
-            alt="Travel Illustration"
-            className="w-full max-w-xs md:w-1/3"
-          />
+
+          {user.role === "traveler" && (
+            <img
+              src={illustration}
+              alt="Travel Illustration"
+              className="w-full max-w-xs md:w-1/3"
+            />
+          )}
+          {user.role === "agent" && (
+            <img
+              src={agentIllustration}
+              alt="Travel Illustration"
+              className="w-full max-w-xs md:w-1/3"
+            />
+          )}
         </div>
 
         {/* Trip Details Section */}
@@ -279,7 +300,7 @@ const ViewDetails = () => {
           </div>
         </div>
 
-        {user && user?.role === "Agency" && <AgBidRequest />}
+        {user && user?.role === "agent" && <AgBidRequest />}
       </div>
     </DashboardLayout>
   );

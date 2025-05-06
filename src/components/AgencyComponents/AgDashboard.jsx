@@ -105,10 +105,6 @@ function AgDashboard() {
   // Handle trip click to navigate to view-details
   const handleTripClick = (trip) => {
     try {
-      if (trip.deadline && new Date(trip.deadline) < new Date()) {
-        setError("Bidding is closed for this trip.");
-        return;
-      }
       if (trip.status !== "pending") {
         setError("This trip is not open for bidding.");
         return;
@@ -153,7 +149,7 @@ function AgDashboard() {
           value={travelTypeFilter}
           onChange={(e) => setTravelTypeFilter(e.target.value)}
           className="p-3 rounded-lg border w-full md:w-1/3">
-          <option value="">Traveler's type</option>
+          <option value="">Travelers type</option>
           <option value="Solo">Solo</option>
           <option value="Group">Group</option>
         </select>

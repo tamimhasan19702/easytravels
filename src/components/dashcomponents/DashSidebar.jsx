@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import brand from "../../assets/images/2.png";
 
 function DashSidebar() {
+  const { user } = useUser();
   const { logout } = useUser();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State to toggle sidebar on mobile
@@ -76,46 +77,103 @@ function DashSidebar() {
         {/* Navigation Links */}
         <nav className="flex-1">
           <ul className="list-none p-0">
-            <li className="mb-4">
-              <Link
-                to="/dashboard"
-                className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
-                <span className="material-icons mr-2">dashboard</span>
-                Dashboard
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link
-                to="/my-trips"
-                className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
-                <span className="material-icons mr-2">luggage</span>
-                My Trips
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link
-                to="/bookings"
-                className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
-                <span className="material-icons mr-2">book_online</span>
-                Bookings
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link
-                to="/profile"
-                className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
-                <span className="material-icons mr-2">person</span>
-                Profile
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link
-                to="/settings"
-                className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
-                <span className="material-icons mr-2">settings</span>
-                Settings
-              </Link>
-            </li>
+            {user.role === "Traveler" && (
+              <>
+                <li className="mb-4">
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">dashboard</span>
+                    Dashboard
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/my-trips"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">luggage</span>
+                    My Trips
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/bookings"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">book_online</span>
+                    Bookings
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/profile"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">person</span>
+                    Profile
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/settings"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">settings</span>
+                    Settings
+                  </Link>
+                </li>
+              </>
+            )}
+
+            {user.role === "agent" && (
+              <>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-dashboard"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">dashboard</span>
+                    Dashboard
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-manage-bookings"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">note</span>
+                    Manage Bookings
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-destinations"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">location_on</span>
+                    Destinations
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-support-tickets"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">support</span>
+                    Support Tickets
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-profile"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">person</span>
+                    Profile
+                  </Link>
+                </li>
+                <li className="mb-4">
+                  <Link
+                    to="/agent-settings"
+                    className="flex items-center text-[#2E4A47] text-base no-underline hover:text-[#A8C686] transition-colors">
+                    <span className="material-icons mr-2">settings</span>
+                    Settings
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
 

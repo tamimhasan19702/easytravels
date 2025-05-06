@@ -16,6 +16,8 @@ import { TripRequestProvider } from "./context/TripRequestContext";
 import FinalTripRequest from "./pages/TripReq/FinalTripRequest";
 import MyTrips from "./pages/MyTrips/MyTrips";
 import ViewDetails from "./pages/Details/ViewDetails";
+import AgentDashboard from "./pages/Dashboard/agentDashboard";
+import Contact from "./pages/Contact/Contact";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,7 @@ const App = () => {
             <ReactLenis root>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/contact" element={<Contact />} />
 
                 {/* publicroute */}
 
@@ -54,6 +57,7 @@ const App = () => {
                   <Route path="final-tripreq" element={<FinalTripRequest />} />
                   <Route path="my-trips" element={<MyTrips />} />
                   <Route path="view-details" element={<ViewDetails />} />
+                  <Route path="agent-dashboard" element={<AgentDashboard />} />
                 </Route>
               </Routes>
             </ReactLenis>

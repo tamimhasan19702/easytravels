@@ -6,6 +6,7 @@ import brand from "../assets/images/1.png"; // adjust accordingly
 import MenuIcon from "@mui/icons-material/Menu"; // MUI Material Icon
 import CloseIcon from "@mui/icons-material/Close"; // Close icon
 import { useUser } from "@/context/UserContext";
+import { use } from "react";
 
 export default function Header() {
   const { user } = useUser();
@@ -40,11 +41,34 @@ export default function Header() {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-5">
             {user ? (
-              <Link to="/dashboard" className="btn primary_btn !py-4">
-                DASHBOARD
-              </Link>
+              <>
+                <Link to="/contact" className=" !py-4 font-semibold px-5">
+                  Contact us
+                </Link>
+
+                {user?.role === "Traveler" && (
+                  <>
+                    <Link to="/dashboard" className="btn primary_btn !py-4">
+                      Dashboard
+                    </Link>
+                  </>
+                )}
+
+                {user?.role === "agent" && (
+                  <>
+                    <Link
+                      to="/agent-dashboard"
+                      className="btn primary_btn !py-4">
+                      Dashboard
+                    </Link>
+                  </>
+                )}
+              </>
             ) : (
               <>
+                <Link to="/contact" className=" !py-4 font-semibold px-5">
+                  Contact us
+                </Link>
                 <Link to="/login" className="btn white_btn !py-4">
                   LOG IN
                 </Link>
@@ -78,14 +102,28 @@ export default function Header() {
         </div>
         <div className="flex flex-col gap-4 p-5">
           {user ? (
-            <Link
-              to="/dashboard"
-              onClick={toggleSidebar}
-              className="btn primary_btn">
-              DASHBOARD
-            </Link>
+            <>
+              <Link
+                to="/contact"
+                onClick={toggleSidebar}
+                className="font-semibold px-5">
+                Contact us
+              </Link>
+              <Link
+                to="/dashboard"
+                onClick={toggleSidebar}
+                className="btn primary_btn">
+                DASHBOARD
+              </Link>
+            </>
           ) : (
             <>
+              <Link
+                to="/contact"
+                onClick={toggleSidebar}
+                className="font-semibold px-5">
+                Contact us
+              </Link>
               <Link
                 to="/login"
                 onClick={toggleSidebar}

@@ -1,11 +1,6 @@
 /** @format */
 
-import {
-  FaUser,
-  FaMapMarkerAlt,
-  FaClock,
-  FaMoneyBillWave,
-} from "react-icons/fa";
+import { FaUser, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 const cardVariants = {
@@ -14,22 +9,6 @@ const cardVariants = {
 };
 
 function TripCard({ trip, onClick }) {
-  const calculateTimeLeft = (deadline) => {
-    if (!deadline) return "Not set";
-    const now = new Date();
-    const deadlineDate = deadline.toDate
-      ? deadline.toDate()
-      : new Date(deadline);
-    const diffMs = deadlineDate - now;
-    if (diffMs <= 0) return "Expired";
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const diffSecs = Math.floor((diffMs % (1000 * 60)) / 1000);
-    return `${diffHrs}:${diffMins.toString().padStart(2, "0")}:${diffSecs
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
   const totalPeople =
     trip.tripDetails.travelType === "Solo"
       ? 1
@@ -48,7 +27,7 @@ function TripCard({ trip, onClick }) {
           <FaUser className="text-[#2E4A47] flex-shrink-0" />
           <span className="text-gray-700 font-medium truncate">
             <strong>Travel Type:</strong> {trip.tripDetails.travelType} (
-            {totalPeople} {totalPeople === 1 ? "person" : "people"})
+            {totalPeople} {totalPeople === 1 ? "person" : "people"} )
           </span>
         </div>
         <div className="flex items-center gap-3 overflow-hidden">
@@ -84,12 +63,7 @@ function TripCard({ trip, onClick }) {
           onClick={onClick}>
           <span className="text-lg">+</span> View Details
         </motion.button>
-        <div className="flex items-center gap-3 overflow-hidden">
-          <FaClock className="text-[#2E4A47] flex-shrink-0" />
-          <span className="text-gray-700 font-medium truncate">
-            Time Left: {calculateTimeLeft(trip.deadline)}
-          </span>
-        </div>
+
         <div className="flex items-center gap-3 overflow-hidden">
           <FaMoneyBillWave className="text-[#2E4A47] flex-shrink-0" />
           <span className="text-gray-700 font-medium truncate">

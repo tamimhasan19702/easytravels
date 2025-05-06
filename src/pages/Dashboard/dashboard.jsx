@@ -36,7 +36,7 @@ function Dashboard() {
 
   // Redirect if not authenticated or still loading
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !user?.role === "Traveler") {
       navigate("/");
     }
     console.log(user);
