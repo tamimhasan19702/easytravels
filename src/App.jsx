@@ -12,17 +12,14 @@ import Signup from "./pages/Auth/Signup";
 import Login from "./pages/Auth/Login";
 import Dashboard from "./pages/Dashboard/dashboard";
 import TripRequest from "./pages/TripReq/TripRequest";
-import {
-  TripRequestProvider,
-  useTripRequest,
-} from "./context/TripRequestContext";
+import { TripRequestProvider } from "./context/TripRequestContext";
 import FinalTripRequest from "./pages/TripReq/FinalTripRequest";
 import MyTrips from "./pages/MyTrips/MyTrips";
 import ViewDetails from "./pages/Details/ViewDetails";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
-  const { trip } = useTripRequest;
+
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);

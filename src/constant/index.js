@@ -45,29 +45,29 @@ export const pricingTableInfo = [
 
 export const faq = [
   {
-    question: "How long until we deliver your first blog post?",
+    question: "How easy is it to book with EasyTravels?",
     answer:
-      "Really boy law county she unable her sister. Feet you off its like like six. Among sex are leave law built now. In built table in an rapid blush. Merits behind on afraid or warmly.",
+      "t’s as simple as 1-2-3! Pick your destination, choose a package, and book in minutes. You’ll get a confirmation email with all the details.",
   },
   {
-    question: "How long until we deliver your first blog post?",
+    question: "What’s included in EasyTravels packages?",
     answer:
-      "Really boy law county she unable her sister. Feet you off its like like six. Among sex are leave law built now. In built table in an rapid blush. Merits behind on afraid or warmly.",
+      "Our packages cover flights, hotels, and select activities to keep things simple. Check the package details for more info.",
   },
   {
-    question: "How long until we deliver your first blog post?",
+    question: "Can I customize my trip with EasyTravels?",
     answer:
-      "Really boy law county she unable her sister. Feet you off its like like six. Among sex are leave law built now. In built table in an rapid blush. Merits behind on afraid or warmly.",
+      "Yes! Our tools make it easy to tweak your itinerary, or you can reach out to our team for help.",
   },
   {
-    question: "How long until we deliver your first blog post?",
+    question: "What if I need to cancel my booking?",
     answer:
-      "Really boy law county she unable her sister. Feet you off its like like six. Among sex are leave law built now. In built table in an rapid blush. Merits behind on afraid or warmly.",
+      "We make cancellations easy with flexible policies. Check the terms when booking or contact us for assistance.",
   },
   {
-    question: "How long until we deliver your first blog post?",
+    question: "Will I have support during my trip?",
     answer:
-      "Really boy law county she unable her sister. Feet you off its like like six. Among sex are leave law built now. In built table in an rapid blush. Merits behind on afraid or warmly.",
+      "Absolutely! EasyTravels offers 24/7 support to ensure your trip goes smoothly.",
   },
 ];
 

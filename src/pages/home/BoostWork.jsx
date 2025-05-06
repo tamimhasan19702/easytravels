@@ -64,7 +64,7 @@ const BoostWork = () => {
             <p className="!font-normal mt-5 max-w-[500px]">
               Our sightseeing experiences stand out with handpicked tours led by
               local experts, offering skip-the-line access to save time and
-              customizable itineraries to match your pace. Whether you're
+              customizable itineraries to match your pace. Whether you are
               exploring cultural landmarks like the Louvre or ancient ruins,
               seeking adventure through hiking and zip-lining, or indulging in
               food tours and wine tastings, we cater to every interest. From

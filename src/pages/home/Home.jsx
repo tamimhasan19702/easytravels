@@ -6,8 +6,9 @@ import BoostWork from "./BoostWork";
 import Clients from "./Clients";
 import Faq from "./Faq";
 import Hero from "./Hero";
-import Pricing from "./Pricing";
-import TimeLine from "./TimeLine";
+import FeaturedDestinations from "./FeaturedDestinations";
+import Aboutus from "./Aboutus";
+import HowItWorks from "./HowitWorks";
 
 const Home = () => {
   return (
@@ -16,8 +17,9 @@ const Home = () => {
       <Hero />
       <Clients />
       <BoostWork />
-      <TimeLine />
-      <Pricing />
+      <Aboutus />
+      <HowItWorks />
+      <FeaturedDestinations />
       <Faq />
       <Footer />
     </>

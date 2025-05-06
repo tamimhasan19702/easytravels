@@ -35,7 +35,7 @@ const Footer = () => {
             <img
               src={brandImg}
               alt="logo"
-              className="w-[300px] align-top justify-start"
+              className="w-[100px] align-top justify-start"
             />
             <p className="text-white text-[14px] mt-5 font-Inter">
               P2 09 Alhafeez Heights,
