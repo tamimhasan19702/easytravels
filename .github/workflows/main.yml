@@ -19,4 +19,4 @@ jobs:
           server: ftp.nbysoft.com
           username: ${{ secrets.ftp_username }}
           password: ${{ secrets.ftp_password }}
-          server-dir: /travel.nbysoft.com
+          server-dir: /travel.nbysoft.com/
