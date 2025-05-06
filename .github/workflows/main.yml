@@ -30,7 +30,7 @@ jobs:
       - name: 📂 Deploy to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ftp.nbysoft.com
+          server: premium34.web-hosting.com
           username: ${{ secrets.ftp_username }}
           password: ${{ secrets.ftp_password }}
           server-dir: /travel.nbysoft.com/
