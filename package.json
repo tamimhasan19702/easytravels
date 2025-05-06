@@ -2,6 +2,7 @@
   "name": "project_1",
   "private": true,
   "version": "0.0.0",
+  "homepage": "./travel.nbysoft.com/",
   "type": "module",
   "scripts": {
     "dev": "vite",
