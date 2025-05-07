@@ -83,19 +83,19 @@ function AgBidRequest() {
       return;
     }
 
-    // try {
-    //   const alreadyBid = await hasAgencyBid(trip.id, user.uid);
-    //   if (alreadyBid) {
-    //     setError("You have already submitted a bid for this trip.");
-    //     setIsSubmitting(false);
-    //     return;
-    //   }
-    // } catch (err) {
-    //   console.error("Error checking existing bids:", err);
-    //   setError("Failed to verify bid status. Please try again later.");
-    //   setIsSubmitting(false);
-    //   return;
-    // }
+    try {
+      const alreadyBid = await hasAgencyBid(trip.id, user.uid);
+      if (alreadyBid) {
+        setError("You have already submitted a bid for this trip.");
+        setIsSubmitting(false);
+        return;
+      }
+    } catch (err) {
+      console.error("Error checking existing bids:", err);
+      setError("Failed to verify bid status. Please try again later.");
+      setIsSubmitting(false);
+      return;
+    }
 
     if (
       !formData.coverLetterSubject ||
