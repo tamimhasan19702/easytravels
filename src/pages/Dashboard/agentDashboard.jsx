@@ -4,8 +4,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import DashboardLayout from "../../components/DashboardLayout"; // Adjust path as needed
-import travelIllustration from "../../assets/images/dashboard.svg"; // Adjust path to your illustration
-import { Bar } from "react-chartjs-2"; // For the graph
+import travelIllustration from "../../assets/images/dashboard.svg";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,9 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { stats, upcomingBookings, recentTrips, graphData } from "@/constant";
 import AgDashboard from "@/components/AgencyComponents/AgDashboard";
-import { useState } from "react";
 
 // Register Chart.js components
 ChartJS.register(
@@ -32,7 +29,6 @@ ChartJS.register(
 function AgentDashboard() {
   const { user, loading } = useUser();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Overview"); // State for tabs
 
   // Redirect if not authenticated or still loading
   useEffect(() => {
