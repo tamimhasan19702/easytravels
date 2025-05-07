@@ -1,6 +1,7 @@
 /** @format */
 
 import React from "react";
+import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { Mail, Phone, DollarSign, FileText, Clock } from "lucide-react";
 
@@ -85,6 +86,22 @@ const BidComponent = ({ bid }) => {
       )}
     </motion.div>
   );
+};
+
+BidComponent.propTypes = {
+  bid: PropTypes.shape({
+    agencyName: PropTypes.string,
+    amount: PropTypes.number,
+    attachments: PropTypes.arrayOf(PropTypes.string),
+    coverLetter: PropTypes.string,
+    email: PropTypes.string,
+    number: PropTypes.string,
+    status: PropTypes.string,
+    submittedAt: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.instanceOf(Date),
+    ]),
+  }),
 };
 
 export default BidComponent;
