@@ -1,16 +1,19 @@
 /** @format */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { useTripRequest } from "@/context/TripRequestContext";
 import { storage } from "../../../firebase.config";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useNavigate } from "react-router-dom";
+import Lottie from "lottie-react";
+import tickmark from "../../assets/tickmark.json";
 
 function AgBidRequest() {
   const { user } = useUser();
   const { trip, addBid, hasAgencyBid } = useTripRequest();
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     coverLetterSubject: "",
@@ -23,13 +26,11 @@ function AgBidRequest() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handle text input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file input changes
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
     if (selectedFiles.length > 5) {
@@ -42,9 +43,9 @@ function AgBidRequest() {
       return;
     }
     setFiles(selectedFiles);
+    setError(null);
   };
 
-  // Upload files to Firebase Storage and get URLs
   const uploadFiles = async () => {
     const fileUrls = [];
     for (const file of files) {
@@ -59,37 +60,29 @@ function AgBidRequest() {
     return fileUrls;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
-    // Validate user role
-    if (!user || user.role !== "Agency") {
+    if (!user || user.role !== "agent") {
       setError("You do not have permission to submit a bid.");
       setIsSubmitting(false);
       return;
     }
 
-    // Validate trip existence and bidding eligibility
     if (!trip || !trip.id) {
       setError("No trip selected for bidding.");
       setIsSubmitting(false);
       return;
     }
-    if (trip.deadline && new Date(trip.deadline) < new Date()) {
-      setError("Bidding is closed for this trip.");
-      setIsSubmitting(false);
-      return;
-    }
+
     if (trip.status !== "pending") {
       setError("This trip is not open for bidding.");
       setIsSubmitting(false);
       return;
     }
 
-    // Check for existing bid
     try {
       const alreadyBid = await hasAgencyBid(trip.id, user.uid);
       if (alreadyBid) {
@@ -104,7 +97,6 @@ function AgBidRequest() {
       return;
     }
 
-    // Validate required fields
     if (
       !formData.coverLetterSubject ||
       !formData.agencyName ||
@@ -116,7 +108,6 @@ function AgBidRequest() {
       return;
     }
 
-    // Validate bid price
     if (parseFloat(formData.bidPrice) <= 0) {
       setError("Bid price must be positive.");
       setIsSubmitting(false);
@@ -124,10 +115,8 @@ function AgBidRequest() {
     }
 
     try {
-      // Upload files (if any)
       const fileUrls = await uploadFiles();
 
-      // Create bid data
       const agentBid = {
         agencyName: formData.agencyName,
         coverLetterSubject: formData.coverLetterSubject,
@@ -137,10 +126,8 @@ function AgBidRequest() {
         documents: fileUrls,
       };
 
-      // Submit bid
       await addBid(trip.id, agentBid);
 
-      // Reset form and navigate back
       setFormData({
         coverLetterSubject: "",
         agencyName: user?.name || "",
@@ -150,7 +137,7 @@ function AgBidRequest() {
       });
       setFiles([]);
       setIsSubmitting(false);
-      navigate("/dashboard");
+      setIsModalOpen(true); // Show success modal
     } catch (err) {
       console.error("Error submitting bid:", err);
       setError("Failed to submit bid. Please try again later.");
@@ -159,11 +146,13 @@ function AgBidRequest() {
   };
 
   return (
-    <div className="bg-[#F5F6F5] mt-6 min-h-screen">
+    <div className="bg-[#F5F6F5] mt-6 min-h-screen px-4 pb-10">
       <h2 className="text-2xl font-semibold text-[#2E4A47] mb-4">
         Agency Bid Request
       </h2>
-      {error && <div className="text-red-500 text-center py-4">{error}</div>}
+
+      {error && <div className="text-red-500 text-center py-2">{error}</div>}
+
       {trip && (
         <div className="mb-6 bg-white p-4 rounded-lg shadow">
           <h3 className="text-lg font-medium text-[#2E4A47]">Trip Details</h3>
@@ -181,17 +170,12 @@ function AgBidRequest() {
           <p>
             <strong>Status:</strong> {trip.status}
           </p>
-          {trip.deadline && (
-            <p>
-              <strong>Bidding Deadline:</strong>{" "}
-              {new Date(trip.deadline).toLocaleString()}
-            </p>
-          )}
         </div>
       )}
+
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow max-w-full mx-auto w-full">
+        className="bg-white p-6 rounded-lg shadow max-w-full w-full mx-auto">
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Cover Letter Subject
@@ -202,10 +186,11 @@ function AgBidRequest() {
             value={formData.coverLetterSubject}
             onChange={handleInputChange}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4A47]"
-            placeholder="Enter bid subject (e.g., Proposal for Japan Trip)"
+            placeholder="Proposal for Japan Trip"
             required
           />
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Agency Name
@@ -216,10 +201,10 @@ function AgBidRequest() {
             value={formData.agencyName}
             onChange={handleInputChange}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4A47]"
-            placeholder="Enter agency name"
             required
           />
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Agency Information
@@ -229,11 +214,12 @@ function AgBidRequest() {
             value={formData.agencyInfo}
             onChange={handleInputChange}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4A47]"
-            rows="5"
+            rows="4"
             placeholder="Provide agency details, experience, or certifications"
             required
           />
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Bid Price (USD)
@@ -244,12 +230,12 @@ function AgBidRequest() {
             value={formData.bidPrice}
             onChange={handleInputChange}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4A47]"
-            placeholder="Enter total bid price"
             min="0"
             step="0.01"
             required
           />
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Pricing Breakdown (Optional)
@@ -260,9 +246,9 @@ function AgBidRequest() {
             onChange={handleInputChange}
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4A47]"
             rows="3"
-            placeholder="Break down costs (e.g., accommodation, transport)"
           />
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-medium text-[#2E4A47] mb-1">
             Upload Documents (Optional, max 5 files, 5MB each)
@@ -275,7 +261,7 @@ function AgBidRequest() {
             accept=".pdf,.doc,.docx,.jpg,.png"
           />
           {files.length > 0 && (
-            <ul className="mt-2 text-sm text-gray-600">
+            <ul className="mt-2 text-sm text-gray-600 space-y-1">
               {files.map((file, index) => (
                 <li key={index} className="flex items-center gap-2">
                   {file.type.startsWith("image/") && (
@@ -291,22 +277,49 @@ function AgBidRequest() {
             </ul>
           )}
         </div>
-        <div className="flex justify-end gap-2">
+
+        <div className="flex justify-end gap-2 mt-6">
           <button
             type="button"
             onClick={() => navigate("/agency-dashboard")}
-            className="px-4 py-2 bg-gray-300 rounded-lg text-gray-700"
-            disabled={isSubmitting}>
+            className="px-4 py-2 bg-gray-300 rounded-lg text-gray-700 hover:bg-gray-400">
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 bg-[#2E4A47] text-white rounded-lg disabled:opacity-50"
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+            className={`px-6 py-2 rounded-lg text-white ${
+              isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-[#2E4A47]"
+            }`}>
             {isSubmitting ? "Submitting..." : "Submit Bid"}
           </button>
         </div>
       </form>
+
+      {/* Success Modal with Lottie Animation */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md text-center shadow-lg">
+            <Lottie
+              animationData={tickmark}
+              loop={false}
+              className="w-36 mx-auto"
+            />
+            <h2 className="text-xl font-semibold text-[#2E4A47] mt-4 mb-2">
+              Bid Submitted Successfully!
+            </h2>
+            <p className="text-gray-600 mb-4">Thank you for your submission.</p>
+            <button
+              onClick={() => {
+                setIsModalOpen(false);
+                navigate("/agent-dashboard");
+              }}
+              className="px-4 py-2 bg-[#2E4A47] text-white rounded-lg hover:bg-[#243835]">
+              Go to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

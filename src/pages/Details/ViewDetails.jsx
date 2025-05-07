@@ -9,6 +9,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import AgBidRequest from "@/components/AgencyComponents/AgBidRequest";
 import { useUser } from "@/context/UserContext";
 import { useEffect } from "react";
+import BidComponent from "@/components/AgencyComponents/BidComponent";
 
 const ViewDetails = () => {
   const { user } = useUser();
@@ -62,8 +63,7 @@ const ViewDetails = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                user.role === "traveler" && navigate("/my-trips");
-                user.role === "agent" && navigate("/agent-dashboard");
+                navigate(-1);
               }}
               className="text-[#2E4A47] hover:text-[#1F3634] transition-colors duration-200">
               <FaArrowLeft size={24} />
@@ -274,16 +274,6 @@ const ViewDetails = () => {
             <p className="text-gray-700">
               {bids.length > 0 ? `${bids.length} bids received` : "No bids yet"}
             </p>
-            {bids.length > 0 && (
-              <ul className="list-disc list-inside text-gray-700 mt-2">
-                {bids.map((bid, index) => (
-                  <li key={index}>
-                    Bid {index + 1}: Agent: {bid.agentEmail}, Amount:{" "}
-                    {bid.bidAmount}, Message: {bid.message || "None"}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           {/* Terms */}
@@ -299,6 +289,16 @@ const ViewDetails = () => {
             </label>
           </div>
         </div>
+
+        {bids.length > 0 && user.role === "Traveler" && (
+          <div className="my-6 ">
+            <h3 className="text-lg font-medium text-[#2E4A47]">Bid Details</h3>
+
+            {bids.map((bid, index) => (
+              <BidComponent key={index} bid={bid} />
+            ))}
+          </div>
+        )}
 
         {user && user?.role === "agent" && <AgBidRequest />}
       </div>

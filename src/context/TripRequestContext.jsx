@@ -11,9 +11,9 @@ import {
   getDocs,
   updateDoc,
   arrayUnion,
+  getDoc,
 } from "firebase/firestore";
 import PropTypes from "prop-types";
-import { getDoc } from "firebase/firestore";
 
 // Create the TripRequestContext
 const TripRequestContext = createContext();
@@ -27,7 +27,7 @@ export const TripRequestProvider = ({ children }) => {
     tripDetails: {
       startDate: "",
       endDate: "",
-      preferredTime: "", // New field for preferred time
+      preferredTime: "",
       destinations: [],
       travelType: "",
       maleCount: 0,
@@ -46,7 +46,7 @@ export const TripRequestProvider = ({ children }) => {
       locations: [],
     },
     createdAt: null,
-    deadline: null, // New field for 24-hour deadline
+    deadline: null,
     status: "pending",
     bids: [],
   });
@@ -61,17 +61,18 @@ export const TripRequestProvider = ({ children }) => {
 
       const tripToSave = {
         ...tripData,
-        createdAt: createdAt,
-        deadline: deadline,
+        createdAt,
+        deadline,
         status: "pending",
         bids: tripData.bids || [],
       };
 
       const docRef = await addDoc(collection(db, "tripRequests"), tripToSave);
-      console.log("New trip request added with ID: ", docRef.id);
+      setTrip({ ...tripToSave, id: docRef.id });
+      console.log("New trip request added with ID:", docRef.id);
       return docRef.id;
     } catch (error) {
-      console.error("Error adding trip request to Firestore: ", error);
+      console.error("Error adding trip request to Firestore:", error);
       throw error;
     }
   };
@@ -79,28 +80,30 @@ export const TripRequestProvider = ({ children }) => {
   // Handle form submission (updates state and redirects to final review)
   const handleSubmit = (e, callback) => {
     e.preventDefault();
-    if (!trip.tripDetails.termsAgreed) {
+    const details = trip.tripDetails;
+
+    if (!details.termsAgreed) {
       alert("You must agree to the Terms & Conditions.");
       return;
     }
-    if (!trip.tripDetails.startDate || !trip.tripDetails.endDate) {
+    if (!details.startDate || !details.endDate) {
       alert("Please select a date range for your trip.");
       return;
     }
-    if (trip.tripDetails.destinations.length === 0) {
+    if (details.destinations.length === 0) {
       alert("Please select at least one destination.");
       return;
     }
     if (callback) callback();
   };
 
+  // Check if agency already submitted a bid
   const hasAgencyBid = async (tripId, agencyId) => {
     try {
       const tripRef = doc(db, "tripRequests", tripId);
       const tripDoc = await getDoc(tripRef);
-      if (!tripDoc.exists()) {
-        throw new Error("Trip does not exist.");
-      }
+      if (!tripDoc.exists()) throw new Error("Trip does not exist.");
+
       const tripData = tripDoc.data();
       const bids = tripData.bids || [];
       return bids.some((bid) => bid.agencyId === agencyId);
@@ -110,8 +113,7 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
-  // Function to add a bid (for agents, typically called from an agent-facing component)
-  // Function to add a bid (for agents)
+  // Submit a bid from an agent
   const addBid = async (tripId, agentBid) => {
     if (!user || user.role !== "agent") {
       throw new Error("Only agents can submit bids.");
@@ -120,6 +122,7 @@ export const TripRequestProvider = ({ children }) => {
     try {
       const tripRef = doc(db, "tripRequests", tripId);
       const tripDoc = await getDoc(tripRef);
+
       if (!tripDoc.exists()) {
         throw new Error("Trip does not exist.");
       }
@@ -136,6 +139,7 @@ export const TripRequestProvider = ({ children }) => {
         bidId: `bid_${Math.random().toString(36).substr(2, 9)}`,
         isRead: false,
         amount: parseFloat(agentBid.bidPrice) || 0,
+        agencyId: user.uid,
         agencyName: agentBid.agencyName || user.name || "Unknown Agency",
         email: user.email || "Unknown Email",
         number: agentBid.contactNumber || "Unknown Number",
@@ -150,11 +154,10 @@ export const TripRequestProvider = ({ children }) => {
       });
 
       if (trip.id === tripId) {
-        const updatedTrip = {
-          ...trip,
-          bids: [...trip.bids, newBid],
-        };
-        setTrip(updatedTrip);
+        setTrip((prev) => ({
+          ...prev,
+          bids: [...prev.bids, newBid],
+        }));
       }
 
       console.log("Bid added successfully by agent:", user.uid);
@@ -165,10 +168,14 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
+  // Fetch all trip requests from Firestore
   const fetchAllTrips = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "tripRequests"));
-      const trips = querySnapshot.docs.map((doc) => doc.data());
+      const trips = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
       return trips;
     } catch (error) {
       console.error("Error fetching trips:", error);
@@ -176,7 +183,6 @@ export const TripRequestProvider = ({ children }) => {
     }
   };
 
-  // Context value
   const value = {
     trip,
     setTrip,
