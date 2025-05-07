@@ -11,8 +11,8 @@ const DashHeader = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown visibility
 
   const handleLogout = async () => {
-    await logout(); // Call logout from context
-    navigate("/"); // Redirect to home after logout
+    await logout();
+    navigate("/");
   };
 
   const toggleDropdown = () => {
