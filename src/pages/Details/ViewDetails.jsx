@@ -34,10 +34,13 @@ const ViewDetails = () => {
 
   // Format additional options
   const formatAdditionalOptions = () => {
-    return Object.entries(tripDetails.additionalOptions)
-      .filter(([_, value]) => value)
-      .map(([key]) => key.split("_")[1])
-      .join(", ");
+    return (
+      Object.entries(tripDetails.additionalOptions)
+        // eslint-disable-next-line
+        .filter(([_, value]) => value)
+        .map(([key]) => key.split("_")[1])
+        .join(", ")
+    );
   };
 
   // Calculate trip duration

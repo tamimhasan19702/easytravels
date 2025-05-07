@@ -18,6 +18,9 @@ import MyTrips from "./pages/MyTrips/MyTrips";
 import ViewDetails from "./pages/Details/ViewDetails";
 import AgentDashboard from "./pages/Dashboard/agentDashboard";
 import Contact from "./pages/Contact/Contact";
+import Bookings from "./pages/Bookings/Bookings";
+import Profile from "./pages/Profile/Profile";
+import Settings from "./pages/Settings/Settings";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -51,9 +54,9 @@ const App = () => {
                 <Route element={<ProtectedRoute />}>
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="trip-request" element={<TripRequest />} />
-                  <Route path="trips" element={<div>Bookings Page</div>} />
-                  <Route path="profile" element={<div>Profile Page</div>} />
-                  <Route path="settings" element={<div>Settings Page</div>} />
+                  <Route path="bookings" element={<Bookings />} />
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="final-tripreq" element={<FinalTripRequest />} />
                   <Route path="my-trips" element={<MyTrips />} />
                   <Route path="view-details" element={<ViewDetails />} />

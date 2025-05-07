@@ -1,19 +1,14 @@
 /** @format */
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext"; // Adjust path as needed
 import DashSidebar from "./DashSidebar";
 
 const DashHeader = () => {
-  const { user, logout } = useUser(); // Get user and logout from context
-  const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown visibility
+  const { user } = useUser(); // Get user and logout from context
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
-  };
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown visibility
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
