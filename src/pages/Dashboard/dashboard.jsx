@@ -39,7 +39,6 @@ function Dashboard() {
     if (!loading && !user && !user?.role === "Traveler") {
       navigate("/");
     }
-    console.log(user);
   }, [user, loading, navigate]);
 
   // Show loading state while UserContext initializes

@@ -35,7 +35,7 @@ const DashHeader = () => {
           </button>
 
           {/* Dropdown Menu */}
-          {isDropdownOpen && (
+          {isDropdownOpen && user.role === "Traveler" && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-40">
               <Link
                 to="/profile"
@@ -45,6 +45,23 @@ const DashHeader = () => {
               </Link>
               <Link
                 to="/settings"
+                className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
+                onClick={() => setIsDropdownOpen(false)}>
+                Settings
+              </Link>
+            </div>
+          )}
+
+          {isDropdownOpen && user.role === "agent" && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-40">
+              <Link
+                to="/agent-profile"
+                className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
+                onClick={() => setIsDropdownOpen(false)}>
+                Profile
+              </Link>
+              <Link
+                to="/agent-settings"
                 className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
                 onClick={() => setIsDropdownOpen(false)}>
                 Settings

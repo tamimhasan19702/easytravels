@@ -12,15 +12,15 @@ import { useEffect } from "react";
 import BidComponent from "@/components/AgencyComponents/BidComponent";
 
 const ViewDetails = () => {
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const navigate = useNavigate();
   const { trip } = useTripRequest();
 
   useEffect(() => {
-    if (!trip || !trip.userInfo) {
-      navigate("/my-trips");
+    if (!trip || !trip.userInfo || (!user && user?.role !== "Traveler")) {
+      navigate(user?.role === "Traveler" ? "/my-trips" : "/");
     }
-  }, [trip, navigate]);
+  }, [trip, user, navigate, loading]);
 
   const { tripDetails, userInfo, createdAt, deadline, status, bids } = trip;
 

@@ -21,6 +21,11 @@ import Contact from "./pages/Contact/Contact";
 import Bookings from "./pages/Bookings/Bookings";
 import Profile from "./pages/Profile/Profile";
 import Settings from "./pages/Settings/Settings";
+import AgentManageBookings from "./pages/Bookings/AgentManageBookings";
+import AgentDestinations from "./pages/MyTrips/AgentDestinations";
+import SupportTickets from "./pages/Details/SupportTickets";
+import AgentProfile from "./pages/Profile/AgentProfile";
+import AgentSettings from "./pages/Settings/AgentSettings";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -52,6 +57,7 @@ const App = () => {
                 {/* protectedroute */}
 
                 <Route element={<ProtectedRoute />}>
+                  {/* Traveler */}
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="trip-request" element={<TripRequest />} />
                   <Route path="bookings" element={<Bookings />} />
@@ -60,7 +66,22 @@ const App = () => {
                   <Route path="final-tripreq" element={<FinalTripRequest />} />
                   <Route path="my-trips" element={<MyTrips />} />
                   <Route path="view-details" element={<ViewDetails />} />
+                  {/* agent */}
                   <Route path="agent-dashboard" element={<AgentDashboard />} />
+                  <Route
+                    path="agent-manage-bookings"
+                    element={<AgentManageBookings />}
+                  />
+                  <Route
+                    path="agent-destinations"
+                    element={<AgentDestinations />}
+                  />
+                  <Route
+                    path="agent-support-tickets"
+                    element={<SupportTickets />}
+                  />
+                  <Route path="agent-profile" element={<AgentProfile />} />
+                  <Route path="agent-settings" element={<AgentSettings />} />
                 </Route>
               </Routes>
             </ReactLenis>
