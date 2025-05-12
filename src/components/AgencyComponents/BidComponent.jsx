@@ -6,7 +6,7 @@ import { Mail, Phone, DollarSign, FileText, Clock } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { Link } from "react-router-dom";
 
-const BidComponent = ({ bid }) => {
+const BidComponent = ({ bid, tripId, bidId }) => {
   const { user } = useUser();
 
   if (!bid) return <p className="text-gray-500">No bid to display.</p>;
@@ -93,7 +93,7 @@ const BidComponent = ({ bid }) => {
         {user && user.role === "Traveler" && (
           <Link
             to={{
-              pathname: `/user-message/${agencyId}`,
+              pathname: `/user-message/${tripId}/chat/${bidId}`,
               state: { agencyId, agencyName, email },
             }}
             className="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg">

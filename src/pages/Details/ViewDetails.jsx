@@ -22,7 +22,8 @@ const ViewDetails = () => {
     }
   }, [trip, user, navigate, loading]);
 
-  const { tripDetails, userInfo, createdAt, deadline, status, bids } = trip;
+  const { tripDetails, userInfo, createdAt, deadline, status, bids, tripId } =
+    trip;
 
   // Format dates and timestamps
   const formatDate = (date) => (date ? date : "Not set");
@@ -300,7 +301,12 @@ const ViewDetails = () => {
             </h3>
 
             {bids.map((bid, index) => (
-              <BidComponent key={index} bid={bid} />
+              <BidComponent
+                key={index}
+                bid={bid}
+                tripId={tripId}
+                bidId={bid.bidId}
+              />
             ))}
           </div>
         )}

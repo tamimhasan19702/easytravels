@@ -73,7 +73,7 @@ const App = () => {
                     <Route path="my-trips" element={<MyTrips />} />
                     <Route path="view-details" element={<ViewDetails />} />
                     <Route
-                      path="user-message/:tripId/chat/:agencyId"
+                      path="user-message/:tripId/chat/:bidId"
                       element={<UserMessage />}
                     />
                     {/* agent */}

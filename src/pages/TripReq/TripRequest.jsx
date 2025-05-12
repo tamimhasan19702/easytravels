@@ -47,6 +47,7 @@ const TripRequest = () => {
         ...prev,
         tripId: null, // Ensure tripId is initialized to match context
         userInfo: {
+          name: user.fullName,
           email: user.email,
           uid: user.uid,
           role: user.role,
