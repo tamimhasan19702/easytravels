@@ -7,7 +7,7 @@ import {
   useCallback,
   useContext,
 } from "react";
-import { db } from "firebase.config";
+import { db } from "../../firebase.config";
 import PropTypes from "prop-types";
 import {
   collection,
