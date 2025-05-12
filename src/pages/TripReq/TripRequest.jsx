@@ -42,10 +42,9 @@ const TripRequest = () => {
         return;
       }
 
-      // Initialize trip with user data and explicitly include tripId
       setTrip((prev) => ({
         ...prev,
-        tripId: null, // Ensure tripId is initialized to match context
+        tripId: null,
         userInfo: {
           name: user.fullName,
           email: user.email,
