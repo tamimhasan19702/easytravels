@@ -1,6 +1,6 @@
 /** @format */
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../context/UserContext";
 import { useTripRequest } from "../../context/TripRequestContext";
@@ -28,6 +28,7 @@ const TripRequest = () => {
   const [additionalOptions, setAdditionalOptions] = useState({});
   const [transportationMethods, setTransportationMethods] = useState([""]);
   const [foodPreferences, setFoodPreferences] = useState([""]);
+  const [error, setError] = useState(null);
 
   // Redirect if not authenticated or not a Traveler
   useEffect(() => {
@@ -41,9 +42,10 @@ const TripRequest = () => {
         return;
       }
 
-      // Initialize trip with user data from context
+      // Initialize trip with user data and explicitly include tripId
       setTrip((prev) => ({
         ...prev,
+        tripId: null, // Ensure tripId is initialized to match context
         userInfo: {
           email: user.email,
           uid: user.uid,
@@ -53,13 +55,16 @@ const TripRequest = () => {
     }
   }, [user, loading, navigate, setTrip]);
 
-  // Update trip field helper
-  const updateTripField = (field, value) => {
-    setTrip((prev) => ({
-      ...prev,
-      tripDetails: { ...prev.tripDetails, [field]: value },
-    }));
-  };
+  // Memoized update trip field helper to optimize performance
+  const updateTripField = useCallback(
+    (field, value) => {
+      setTrip((prev) => ({
+        ...prev,
+        tripDetails: { ...prev.tripDetails, [field]: value },
+      }));
+    },
+    [setTrip]
+  );
 
   // Custom location handlers
   const handleAddCustomLocation = () =>
@@ -131,9 +136,18 @@ const TripRequest = () => {
   const onSubmit = (e) => {
     handleSubmit(e, async () => {
       setIsSubmitting(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsSubmitting(false);
-      navigate("/final-tripreq");
+      setError(null);
+      try {
+        // Optionally save to Firestore here if final review doesn't handle it
+        // const tripId = await saveToFirestore(trip);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate delay
+        navigate("/final-tripreq");
+      } catch (err) {
+        setError("Failed to process your request. Please try again.");
+        console.error("Submission error:", err);
+      } finally {
+        setIsSubmitting(false);
+      }
     });
   };
 
@@ -157,6 +171,12 @@ const TripRequest = () => {
           />
         </div>
 
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={onSubmit} className="mt-8 space-y-6 w-full">
           <DateRangePicker
             startDate={trip.tripDetails.startDate}
@@ -164,27 +184,37 @@ const TripRequest = () => {
             updateTripField={updateTripField}
           />
 
-          {/* New Time Field */}
+          {/* Preferred Time Field */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="preferredTime"
+              className="block text-sm font-medium text-gray-700 mb-1">
               Preferred Time
             </label>
             <input
+              id="preferredTime"
               type="time"
               value={trip.tripDetails.preferredTime}
               onChange={(e) => updateTripField("preferredTime", e.target.value)}
               className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
+              aria-describedby="preferredTimeHelp"
             />
+            <p id="preferredTimeHelp" className="text-sm text-gray-500 mt-1">
+              Select your preferred departure time.
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="destinations"
+              className="block text-sm font-medium text-gray-700 mb-1">
               Destinations
             </label>
             <button
               type="button"
               onClick={handleSelectDestinations}
-              className="w-full p-3 border rounded-lg bg-[#F5F6F5] text-left text-gray-700">
+              className="w-full p-3 border rounded-lg bg-[#F5F6F5] text-left text-gray-700"
+              aria-label="Select destinations">
               {tempDestinations.length > 0
                 ? tempDestinations.join(", ")
                 : "Select Destinations"}
@@ -294,12 +324,14 @@ const TripRequest = () => {
                     }
                     placeholder={`Additional Method ${index + 1}`}
                     className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-[#2E4A47] bg-[#F5F6F5]"
+                    aria-label={`Transportation method ${index + 1}`}
                   />
                   {transportationMethods.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleDeleteTransportation(index)}
-                      className="text-red-500 hover:text-red-700">
+                      className="text-red-500 hover:text-red-700"
+                      aria-label={`Delete transportation method ${index + 1}`}>
                       Delete
                     </button>
                   )}
@@ -342,12 +374,14 @@ const TripRequest = () => {
                       { value: "Gluten-Free", label: "Gluten-Free" },
                       { value: "No Preference", label: "No Preference" },
                     ]}
+                    aria-label={`Food preference ${index + 1}`}
                   />
                   {foodPreferences.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleDeleteFoodPreference(index)}
-                      className="text-red-500 hover:text-red-700">
+                      className="text-red-500 hover:text-red-700"
+                      aria-label={`Delete food preference ${index + 1}`}>
                       Delete
                     </button>
                   )}
@@ -367,23 +401,33 @@ const TripRequest = () => {
             value={trip.tripDetails.interests}
             onChange={(e) => updateTripField("interests", e.target.value)}
             placeholder="What activities do you enjoy?"
+            aria-describedby="interestsHelp"
           />
+          <p id="interestsHelp" className="text-sm text-gray-500 mt-1">
+            E.g., hiking, snorkeling, cultural tours
+          </p>
 
           <TextAreaField
             label="Remarks/Request"
             value={trip.tripDetails.remarks}
             onChange={(e) => updateTripField("remarks", e.target.value)}
             placeholder="Any special requests?"
+            aria-describedby="remarksHelp"
           />
+          <p id="remarksHelp" className="text-sm text-gray-500 mt-1">
+            E.g., quiet accommodations, child-friendly activities
+          </p>
 
           <div className="flex items-center gap-2">
             <input
+              id="termsAgreed"
               type="checkbox"
               checked={trip.tripDetails.termsAgreed}
               onChange={(e) => updateTripField("termsAgreed", e.target.checked)}
               className="text-[#2E4A47] focus:ring-[#2E4A47]"
+              aria-label="Agree to terms and conditions"
             />
-            <label className="text-sm text-gray-700">
+            <label htmlFor="termsAgreed" className="text-sm text-gray-700">
               I agree to the{" "}
               <a href="#" className="text-[#2E4A47] underline">
                 Terms & Conditions
@@ -394,7 +438,8 @@ const TripRequest = () => {
 
           <button
             type="submit"
-            className="w-full py-3 primary_btn rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300">
+            className="w-full py-3 primary_btn rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300"
+            disabled={isSubmitting}>
             REVIEW YOUR TRAVEL PLAN
           </button>
         </form>

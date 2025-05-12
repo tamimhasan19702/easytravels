@@ -4,14 +4,20 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../../context/UserContext"; // Adjust path as needed
 import DashSidebar from "./DashSidebar";
+import { useNavigate } from "react-router-dom";
 
 const DashHeader = () => {
-  const { user } = useUser(); // Get user and logout from context
-
+  const { user, logout } = useUser(); // Get user and logout from context
+  const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown visibility
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/"); // Redirect to home after logout
   };
 
   return (
@@ -49,6 +55,15 @@ const DashHeader = () => {
                 onClick={() => setIsDropdownOpen(false)}>
                 Settings
               </Link>
+              <Link
+                to="/"
+                className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
+                onClick={async () => {
+                  await handleLogout();
+                  setIsDropdownOpen(false);
+                }}>
+                Logout
+              </Link>
             </div>
           )}
 
@@ -65,6 +80,15 @@ const DashHeader = () => {
                 className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
                 onClick={() => setIsDropdownOpen(false)}>
                 Settings
+              </Link>
+              <Link
+                to="/"
+                className="block px-4 py-2 text-[#2E4A47] hover:bg-[#A8C686] hover:text-white transition-colors"
+                onClick={async () => {
+                  await handleLogout();
+                  setIsDropdownOpen(false);
+                }}>
+                Logout
               </Link>
             </div>
           )}

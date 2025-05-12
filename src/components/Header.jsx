@@ -6,7 +6,6 @@ import brand from "../assets/images/1.png"; // adjust accordingly
 import MenuIcon from "@mui/icons-material/Menu"; // MUI Material Icon
 import CloseIcon from "@mui/icons-material/Close"; // Close icon
 import { useUser } from "@/context/UserContext";
-import { use } from "react";
 
 export default function Header() {
   const { user } = useUser();

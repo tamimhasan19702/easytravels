@@ -295,7 +295,9 @@ const ViewDetails = () => {
 
         {bids.length > 0 && user.role === "Traveler" && (
           <div className="my-6 ">
-            <h3 className="text-lg font-medium text-[#2E4A47]">Bid Details</h3>
+            <h3 className="text-lg font-medium text-[#2E4A47]">
+              Submitted Bids
+            </h3>
 
             {bids.map((bid, index) => (
               <BidComponent key={index} bid={bid} />
