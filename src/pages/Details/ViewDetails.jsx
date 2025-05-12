@@ -22,7 +22,8 @@ const ViewDetails = () => {
     }
   }, [trip, user, navigate, loading]);
 
-  const { tripDetails, userInfo, createdAt, deadline, status, bids } = trip;
+  const { tripDetails, userInfo, createdAt, deadline, status, bids, tripId } =
+    trip;
 
   // Format dates and timestamps
   const formatDate = (date) => (date ? date : "Not set");
@@ -295,10 +296,17 @@ const ViewDetails = () => {
 
         {bids.length > 0 && user.role === "Traveler" && (
           <div className="my-6 ">
-            <h3 className="text-lg font-medium text-[#2E4A47]">Bid Details</h3>
+            <h3 className="text-lg font-medium text-[#2E4A47]">
+              Submitted Bids
+            </h3>
 
             {bids.map((bid, index) => (
-              <BidComponent key={index} bid={bid} />
+              <BidComponent
+                key={index}
+                bid={bid}
+                tripId={tripId}
+                bidId={bid.bidId}
+              />
             ))}
           </div>
         )}

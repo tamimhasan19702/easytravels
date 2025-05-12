@@ -26,6 +26,8 @@ import AgentDestinations from "./pages/MyTrips/AgentDestinations";
 import SupportTickets from "./pages/Details/SupportTickets";
 import AgentProfile from "./pages/Profile/AgentProfile";
 import AgentSettings from "./pages/Settings/AgentSettings";
+import UserMessage from "./pages/Messages/UserMessage";
+import { MessagingProvider } from "./context/MessagingContext";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
@@ -42,49 +44,61 @@ const App = () => {
       ) : (
         <UserProvider>
           <TripRequestProvider>
-            <ReactLenis root>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/contact" element={<Contact />} />
+            <MessagingProvider>
+              <ReactLenis root>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/contact" element={<Contact />} />
 
-                {/* publicroute */}
+                  {/* publicroute */}
 
-                <Route element={<PublicRoute />}>
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/login" element={<Login />} />
-                </Route>
+                  <Route element={<PublicRoute />}>
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/login" element={<Login />} />
+                  </Route>
 
-                {/* protectedroute */}
+                  {/* protectedroute */}
 
-                <Route element={<ProtectedRoute />}>
-                  {/* Traveler */}
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="trip-request" element={<TripRequest />} />
-                  <Route path="bookings" element={<Bookings />} />
-                  <Route path="profile" element={<Profile />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="final-tripreq" element={<FinalTripRequest />} />
-                  <Route path="my-trips" element={<MyTrips />} />
-                  <Route path="view-details" element={<ViewDetails />} />
-                  {/* agent */}
-                  <Route path="agent-dashboard" element={<AgentDashboard />} />
-                  <Route
-                    path="agent-manage-bookings"
-                    element={<AgentManageBookings />}
-                  />
-                  <Route
-                    path="agent-destinations"
-                    element={<AgentDestinations />}
-                  />
-                  <Route
-                    path="agent-support-tickets"
-                    element={<SupportTickets />}
-                  />
-                  <Route path="agent-profile" element={<AgentProfile />} />
-                  <Route path="agent-settings" element={<AgentSettings />} />
-                </Route>
-              </Routes>
-            </ReactLenis>
+                  <Route element={<ProtectedRoute />}>
+                    {/* Traveler */}
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="trip-request" element={<TripRequest />} />
+                    <Route path="bookings" element={<Bookings />} />
+                    <Route path="profile" element={<Profile />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route
+                      path="final-tripreq"
+                      element={<FinalTripRequest />}
+                    />
+                    <Route path="my-trips" element={<MyTrips />} />
+                    <Route path="view-details" element={<ViewDetails />} />
+                    <Route
+                      path="user-message/:tripId/chat/:bidId"
+                      element={<UserMessage />}
+                    />
+                    {/* agent */}
+                    <Route
+                      path="agent-dashboard"
+                      element={<AgentDashboard />}
+                    />
+                    <Route
+                      path="agent-manage-bookings"
+                      element={<AgentManageBookings />}
+                    />
+                    <Route
+                      path="agent-destinations"
+                      element={<AgentDestinations />}
+                    />
+                    <Route
+                      path="agent-support-tickets"
+                      element={<SupportTickets />}
+                    />
+                    <Route path="agent-profile" element={<AgentProfile />} />
+                    <Route path="agent-settings" element={<AgentSettings />} />
+                  </Route>
+                </Routes>
+              </ReactLenis>
+            </MessagingProvider>
           </TripRequestProvider>
         </UserProvider>
       )}

@@ -3,11 +3,16 @@
 import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { Mail, Phone, DollarSign, FileText, Clock } from "lucide-react";
+import { useUser } from "@/context/UserContext";
+import { Link } from "react-router-dom";
 
-const BidComponent = ({ bid }) => {
+const BidComponent = ({ bid, tripId, bidId }) => {
+  const { user } = useUser();
+
   if (!bid) return <p className="text-gray-500">No bid to display.</p>;
 
   const {
+    agencyId,
     agencyName,
     amount,
     attachments,
@@ -83,12 +88,26 @@ const BidComponent = ({ bid }) => {
           </ul>
         </div>
       )}
+
+      <div className="mt-6">
+        {user && user.role === "Traveler" && (
+          <Link
+            to={{
+              pathname: `/user-message/${tripId}/chat/${bidId}`,
+              state: { agencyId, agencyName, email },
+            }}
+            className="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg">
+            Offer Now
+          </Link>
+        )}
+      </div>
     </motion.div>
   );
 };
 
 BidComponent.propTypes = {
   bid: PropTypes.shape({
+    agencyId: PropTypes.string,
     agencyName: PropTypes.string,
     amount: PropTypes.number,
     attachments: PropTypes.arrayOf(PropTypes.string),

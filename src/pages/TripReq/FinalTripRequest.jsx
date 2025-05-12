@@ -17,11 +17,14 @@ const FinalTripRequest = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleFinalRequest = async () => {
     try {
+      setError(null);
       const tripToSave = {
         ...trip,
+        tripId: trip.tripId || null, // Ensure tripId is included, default to null
         userInfo: {
           email: user.email,
           uid: user.uid,
@@ -31,7 +34,9 @@ const FinalTripRequest = () => {
 
       await saveToFirestore(tripToSave);
 
+      // Reset trip state with tripId included
       setTrip({
+        tripId: null, // Reset tripId to match context initial state
         userInfo: {
           email: user.email,
           uid: user.uid,
@@ -40,7 +45,7 @@ const FinalTripRequest = () => {
         tripDetails: {
           startDate: "",
           endDate: "",
-          preferredTime: "", // Reset preferredTime
+          preferredTime: "",
           destinations: [],
           travelType: "",
           maleCount: 0,
@@ -59,7 +64,7 @@ const FinalTripRequest = () => {
           locations: [],
         },
         createdAt: null,
-        deadline: null, // Reset deadline
+        deadline: null,
         status: "pending",
         bids: [],
       });
@@ -72,7 +77,7 @@ const FinalTripRequest = () => {
       }, 3000);
     } catch (error) {
       console.error("Error submitting final request:", error);
-      alert("Failed to submit trip request. Please try again.");
+      setError("Failed to submit trip request. Please try again.");
     }
   };
 
@@ -116,6 +121,12 @@ const FinalTripRequest = () => {
         <h1 className="text-4xl md:text-5xl font-bold text-[#2E4A47] mb-8">
           Review Your Travel Plan
         </h1>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
           {/* User Info */}
@@ -267,12 +278,14 @@ const FinalTripRequest = () => {
           {/* Terms */}
           <div className="flex items-center gap-2">
             <input
+              id="termsAgreed"
               type="checkbox"
               checked={tripDetails.termsAgreed}
               readOnly
               className="text-[#2E4A47] focus:ring-[#2E4A47]"
+              aria-label="Terms agreed"
             />
-            <label className="text-sm text-gray-700">
+            <label htmlFor="termsAgreed" className="text-sm text-gray-700">
               Your travel request will be visible to agencies for 24 hours. No
               refunds after submission.
             </label>
@@ -281,7 +294,9 @@ const FinalTripRequest = () => {
           {/* Submit Button */}
           <button
             onClick={handleFinalRequest}
-            className="w-full py-3 primary_btn rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300">
+            className="w-full py-3 primary_btn rounded-lg bg-[#2E4A47] text-white font-semibold hover:bg-[#1F3634] transition duration-300"
+            aria-label="Submit travel plan"
+            disabled={isModalOpen}>
             SUBMIT MY TRAVEL PLAN
           </button>
         </div>
@@ -310,12 +325,20 @@ const FinalTripRequest = () => {
               backgroundColor: "rgba(0, 0, 0, 0.5)",
               zIndex: 1000,
             },
+          }}
+          aria={{
+            labelledby: "successModalTitle",
+            describedby: "successModalDescription",
           }}>
           <div className="w-16 h-16 mx-auto mb-4">
             <Lottie animationData={tickmark} loop={false} />
           </div>
-          <h2 className="text-2xl font-bold text-[#2E4A47] mb-2">Success!</h2>
-          <p className="text-gray-700 mb-4">
+          <h2
+            id="successModalTitle"
+            className="text-2xl font-bold text-[#2E4A47] mb-2">
+            Success!
+          </h2>
+          <p id="successModalDescription" className="text-gray-700 mb-4">
             Your trip request has been submitted successfully! Please wait for
             some time to receive bid requests from agencies.
           </p>

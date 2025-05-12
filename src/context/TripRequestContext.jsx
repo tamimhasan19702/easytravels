@@ -21,8 +21,9 @@ const TripRequestContext = createContext();
 export const TripRequestProvider = ({ children }) => {
   const { user } = useUser();
 
-  // Initialize trip state with user info and bids field
+  // Initialize trip state with user info, bids field, and tripId
   const [trip, setTrip] = useState({
+    tripId: null, // Add tripId to track unique identifier
     userInfo: null,
     tripDetails: {
       startDate: "",
@@ -61,6 +62,7 @@ export const TripRequestProvider = ({ children }) => {
 
       const tripToSave = {
         ...tripData,
+        tripId: null, // Will be set to Firestore doc ID after saving
         createdAt,
         deadline,
         status: "pending",
@@ -68,9 +70,15 @@ export const TripRequestProvider = ({ children }) => {
       };
 
       const docRef = await addDoc(collection(db, "tripRequests"), tripToSave);
-      setTrip({ ...tripToSave, id: docRef.id });
-      console.log("New trip request added with ID:", docRef.id);
-      return docRef.id;
+      // Update the trip document with its own Firestore ID as tripId
+      const tripId = docRef.id;
+      await updateDoc(docRef, { tripId });
+
+      // Update state with the saved trip, including tripId
+      const updatedTrip = { ...tripToSave, tripId, id: tripId };
+      setTrip(updatedTrip);
+      console.log("New trip request added with ID:", tripId);
+      return tripId;
     } catch (error) {
       console.error("Error adding trip request to Firestore:", error);
       throw error;
@@ -116,7 +124,8 @@ export const TripRequestProvider = ({ children }) => {
   // Submit a bid from an agent
   const addBid = async (tripId, agentBid) => {
     if (!user || user.role !== "agent") {
-      throw new Error("Only agents can submit bids.");
+      console.error("Only agents can submit bids.");
+      return;
     }
 
     try {
@@ -124,7 +133,8 @@ export const TripRequestProvider = ({ children }) => {
       const tripDoc = await getDoc(tripRef);
 
       if (!tripDoc.exists()) {
-        throw new Error("Trip does not exist.");
+        console.error("Trip does not exist.");
+        return;
       }
 
       const tripData = tripDoc.data();
@@ -132,7 +142,8 @@ export const TripRequestProvider = ({ children }) => {
         (bid) => bid.agencyId === user.uid
       );
       if (existingBid) {
-        throw new Error("You have already submitted a bid for this trip.");
+        console.error("You have already submitted a bid for this trip.");
+        return;
       }
 
       const newBid = {
@@ -153,7 +164,7 @@ export const TripRequestProvider = ({ children }) => {
         bids: arrayUnion(newBid),
       });
 
-      if (trip.id === tripId) {
+      if (trip.tripId === tripId) {
         setTrip((prev) => ({
           ...prev,
           bids: [...prev.bids, newBid],
@@ -173,7 +184,8 @@ export const TripRequestProvider = ({ children }) => {
     try {
       const querySnapshot = await getDocs(collection(db, "tripRequests"));
       const trips = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
+        id: doc.id, // Firestore document ID
+        tripId: doc.data().tripId || doc.id, // Ensure tripId is included
         ...doc.data(),
       }));
       return trips;
